@@ -27,5 +27,5 @@ medusa-db.sql
 !.yarn/sdks
 !.yarn/versions
 
-# 雖然本地編譯會產生 .medusa，但通常建議保留這行，先不註解
-.medusa
+# 🚨 最關鍵的修改：把 .medusa 註解掉，不准 Railway 把它當垃圾丟掉！
+# .medusa
