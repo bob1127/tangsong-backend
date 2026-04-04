@@ -3,11 +3,6 @@ import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
 module.exports = defineConfig({
-  // 👇 關鍵新增：在正式環境（Railway）關閉內建後台，並將路徑對齊 Vercel 根目錄
-  admin: {
-    disable: process.env.NODE_ENV === 'production',
-    path: "/", // 🚨 解決白畫面的關鍵：把後台路徑對齊 Vercel 的根目錄
-  },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     // 如果是開發模式就用記憶體模擬 Redis
