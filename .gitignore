@@ -1,7 +1,4 @@
-# 把阻擋打包資料夾的這兩行註解掉！
-# /dist
-# build
-
+/dist
 .env
 .DS_Store
 /uploads
@@ -16,9 +13,8 @@ coverage
 
 ./tsconfig.tsbuildinfo
 medusa-db.sql
-
-# 把這個快取資料夾也註解掉，保險起見
-# .cache
+build
+.cache
 
 .yarn/*
 !.yarn/patches
@@ -27,5 +23,4 @@ medusa-db.sql
 !.yarn/sdks
 !.yarn/versions
 
-# 🚨 最關鍵的修改：把 .medusa 註解掉，不准 Railway 把它當垃圾丟掉！
-# .medusa
+.medusa
