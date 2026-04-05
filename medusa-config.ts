@@ -3,7 +3,7 @@ import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
 module.exports = defineConfig({
-  // 👇 聰明開關：Vercel 開啟後台，Railway 關閉後台
+  // 👇 聰明開關：如果人在 Vercel 就開啟並對齊路徑，如果人在 Railway 就乖乖關閉
   admin: {
     disable: process.env.VERCEL === '1' ? false : process.env.NODE_ENV === 'production',
     path: "/", 
@@ -29,20 +29,27 @@ module.exports = defineConfig({
     }
   },
   modules: {
-    // 你的金價 API 模組
     "metals": {
       resolve: "./src/modules/metals",
     },
-    // 👇 S3 雲端儲存模組 (Medusa V2 專用極簡寫法)
-    "file": {
-      resolve: "@medusajs/file-s3",
+    // 👇 正確的 V2 寫法：外層是 file 模組，內層包著 s3 供應商
+    "@medusajs/file": {
+      resolve: "@medusajs/file",
       options: {
-        file_url: process.env.S3_FILE_URL,
-        access_key_id: process.env.S3_ACCESS_KEY_ID,
-        secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
-        region: process.env.S3_REGION,
-        bucket: process.env.S3_BUCKET,
-        endpoint: process.env.S3_ENDPOINT,
+        providers: [
+          {
+            resolve: "@medusajs/file-s3",
+            id: "s3",
+            options: {
+              file_url: process.env.S3_FILE_URL,
+              access_key_id: process.env.S3_ACCESS_KEY_ID,
+              secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
+              region: process.env.S3_REGION,
+              bucket: process.env.S3_BUCKET,
+              endpoint: process.env.S3_ENDPOINT,
+            },
+          },
+        ],
       },
     },
   }
