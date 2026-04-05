@@ -44,10 +44,9 @@ module.exports = defineConfig({
               region: process.env.S3_REGION,
               bucket: process.env.S3_BUCKET,
               endpoint: process.env.S3_ENDPOINT,
-              forcePathStyle: true,
-              // 👇 終極殺招：強制繞過 S3 的 SSL 握手檢查
-              tls: {
-                rejectUnauthorized: false
+              // 👇 終極殺招：Medusa V2 專用的底層設定包裹
+              additional_client_config: {
+                forcePathStyle: true,
               }
             },
           },
