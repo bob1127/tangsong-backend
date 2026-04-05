@@ -32,8 +32,8 @@ module.exports = defineConfig({
     "metals": {
       resolve: "./src/modules/metals",
     },
-    // 👇 正確的 V2 寫法：外層是 file 模組，內層包著 s3 供應商
-    "@medusajs/file": {
+    // 👇 關鍵修正：屬性名稱必須是乾淨的 "file"！
+    "file": {
       resolve: "@medusajs/file",
       options: {
         providers: [
