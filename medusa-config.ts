@@ -3,9 +3,10 @@ import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
 module.exports = defineConfig({
-  // 👇 關鍵新增：在正式環境（Railway）徹底關閉內建後台，不准它去找 index.html
+  // 👇 聰明開關：如果人在 Vercel 就開啟並對齊路徑，如果人在 Railway 就乖乖關閉
   admin: {
-    disable: process.env.NODE_ENV === 'production',
+    disable: process.env.VERCEL === '1' ? false : process.env.NODE_ENV === 'production',
+    path: "/", 
   },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
