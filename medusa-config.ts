@@ -10,14 +10,12 @@ module.exports = defineConfig({
   },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
-    // 如果是開發模式就用記憶體模擬 Redis
     redisUrl: process.env.NODE_ENV === 'development' ? undefined : process.env.REDIS_URL,
     
-    // 資料庫連線寬限時間增加
     databaseDriverOptions: {
-      connectionTimeoutMillis: 10000, // 增加到 10 秒（預設通常太短）
+      connectionTimeoutMillis: 10000,
       idleTimeoutMillis: 30000,
-      max: 10, // 限制最大連線數，對 Supabase Pooler 更友善
+      max: 10,
     },
 
     http: {
@@ -31,6 +29,18 @@ module.exports = defineConfig({
   modules: {
     "metals": {
       resolve: "./src/modules/metals",
-    }
+    },
+    // 👇 Medusa V2 正確寫法：極簡、直接指定 provider
+    "file": {
+      resolve: "@medusajs/file-s3",
+      options: {
+        file_url: process.env.S3_FILE_URL,
+        access_key_id: process.env.S3_ACCESS_KEY_ID,
+        secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
+        region: process.env.S3_REGION,
+        bucket: process.env.S3_BUCKET,
+        endpoint: process.env.S3_ENDPOINT,
+      },
+    },
   }
 })
