@@ -3,6 +3,10 @@ import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
 module.exports = defineConfig({
+  // 👇 關鍵新增：在正式環境（Railway）徹底關閉內建後台，不准它去找 index.html
+  admin: {
+    disable: process.env.NODE_ENV === 'production',
+  },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     // 如果是開發模式就用記憶體模擬 Redis
