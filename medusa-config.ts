@@ -33,7 +33,7 @@ module.exports = defineConfig({
       resolve: "./src/modules/metals",
     },
     // 👇 關鍵修正：屬性名稱必須是乾淨的 "file"！
-    "file": {
+   "file": {
       resolve: "@medusajs/file",
       options: {
         providers: [
@@ -47,6 +47,8 @@ module.exports = defineConfig({
               region: process.env.S3_REGION,
               bucket: process.env.S3_BUCKET,
               endpoint: process.env.S3_ENDPOINT,
+              // 👇 就是這行！這行沒加，Supabase 就收不到檔案
+              force_path_style: true,
             },
           },
         ],
