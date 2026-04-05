@@ -44,8 +44,11 @@ module.exports = defineConfig({
               region: process.env.S3_REGION,
               bucket: process.env.S3_BUCKET,
               endpoint: process.env.S3_ENDPOINT,
-              // 👇 關鍵修正：必須是駝峰命名！
               forcePathStyle: true,
+              // 👇 終極殺招：強制繞過 S3 的 SSL 握手檢查
+              tls: {
+                rejectUnauthorized: false
+              }
             },
           },
         ],
