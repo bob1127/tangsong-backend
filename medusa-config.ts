@@ -31,26 +31,6 @@ module.exports = defineConfig({
   modules: {
     "metals": {
       resolve: "./src/modules/metals",
-    },
-    // 👇 正式掛載 S3 雲端儲存模組 (連接 Supabase Storage)
-    "@medusajs/file": {
-      resolve: "@medusajs/file",
-      options: {
-        providers: [
-          {
-            resolve: "@medusajs/file-s3",
-            id: "s3",
-            options: {
-              file_url: process.env.S3_FILE_URL,
-              access_key_id: process.env.S3_ACCESS_KEY_ID,
-              secret_access_key: process.env.S3_SECRET_ACCESS_KEY,
-              region: process.env.S3_REGION,
-              bucket: process.env.S3_BUCKET,
-              endpoint: process.env.S3_ENDPOINT,
-            },
-          },
-        ],
-      },
-    },
+    }
   }
 })
