@@ -1,11 +1,12 @@
-import { loadEnv, defineConfig } from '@medusajs/framework/utils'
+// 👇 注意這裡多匯入了 Modules
+import { loadEnv, defineConfig, Modules } from '@medusajs/framework/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
 module.exports = defineConfig({
   admin: {
     disable: process.env.VERCEL === '1' ? false : process.env.NODE_ENV === 'production',
-    path: "/", 
+    // 🗑️ 刪除 path: "/"！讓 Admin 回到預設的 "/app"，把 "/" 還給後端 API
   },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
@@ -27,10 +28,23 @@ module.exports = defineConfig({
     }
   },
   modules: {
+    // 👇 使用官方的 Modules.AUTH 常數來註冊
+    [Modules.AUTH]: {
+      resolve: "@medusajs/auth",
+      options: {
+        providers: [
+          {
+            resolve: "@medusajs/auth-emailpass",
+            id: "emailpass",
+          },
+        ],
+      },
+    },
     "metals": {
       resolve: "./src/modules/metals",
     },
     "file": {
+      // ... 這裡保留你原本 S3 的設定，不要動它
       resolve: "@medusajs/file",
       options: {
         providers: [
@@ -44,7 +58,6 @@ module.exports = defineConfig({
               region: process.env.S3_REGION,
               bucket: process.env.S3_BUCKET,
               endpoint: process.env.S3_ENDPOINT,
-              // 👇 終極殺招：Medusa V2 專用的底層設定包裹
               additional_client_config: {
                 forcePathStyle: true,
               }

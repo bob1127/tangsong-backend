@@ -25,7 +25,7 @@
   "include": [
     "**/*",
     ".medusa/types/*"
-  ],
+, "../tangsong-store-storefront/src/app/api/auth"  ],
   "exclude": [
     "node_modules",
     ".medusa/server",
