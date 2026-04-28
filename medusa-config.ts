@@ -28,15 +28,42 @@ module.exports = defineConfig({
     }
   },
   modules: {
-    // 👇 使用官方的 Modules.AUTH 常數來註冊
+    blog: {
+      resolve: "./src/modules/blog",
+    },
+    // 👇 註冊 Auth 模組與社群登入 Providers
+  // 👇 註冊 Auth 模組與社群登入 Providers
     [Modules.AUTH]: {
       resolve: "@medusajs/auth",
       options: {
         providers: [
+          // 原本的 Email/密碼登入
           {
             resolve: "@medusajs/auth-emailpass",
             id: "emailpass",
           },
+        {
+            resolve: "@medusajs/auth-google",
+            id: "google",
+            options: {
+              clientId: process.env.GOOGLE_CLIENT_ID,
+              clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+              // 🌟 關鍵修改：讓 Google 跳轉回你的前端 Next.js
+              callbackUrl: `${process.env.STORE_CORS || "http://localhost:8000"}/callback/google`,
+            },
+          },
+          // 🚨 已經將 LINE 註解掉，避免找不到套件導致伺服器崩潰！
+          /*
+          {
+            resolve: "medusa-auth-line",
+            id: "line",
+            options: {
+              clientId: process.env.LINE_CLIENT_ID,
+              clientSecret: process.env.LINE_CLIENT_SECRET,
+              callbackUrl: `${process.env.MEDUSA_BACKEND_URL}/auth/customer/line/callback`,
+            },
+          }
+          */
         ],
       },
     },

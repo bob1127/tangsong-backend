@@ -23,6 +23,7 @@ import type { IEventBusModuleService } from '@medusajs/framework/types'
 import type { IWorkflowEngineService } from '@medusajs/framework/types'
 import type { ILockingModule } from '@medusajs/framework/types'
 import type { IFileModuleService } from '@medusajs/framework/types'
+import type Blog from '../../src/modules/blog'
 import type Metals from '../../src/modules/metals'
 
 declare module '@medusajs/framework/types' {
@@ -52,6 +53,7 @@ declare module '@medusajs/framework/types' {
     'workflows': IWorkflowEngineService,
     'locking': ILockingModule,
     'file': IFileModuleService,
+    'blog': InstanceType<(typeof Blog)['service']>,
     'metals': InstanceType<(typeof Metals)['service']>
   }
 }

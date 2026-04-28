@@ -24,10 +24,13 @@
   "dependencies": {
     "@medusajs/admin-sdk": "2.13.1",
     "@medusajs/auth-emailpass": "^2.13.1",
+    "@medusajs/auth-google": "^2.14.1",
     "@medusajs/cli": "2.13.1",
     "@medusajs/file-s3": "^2.13.5",
     "@medusajs/framework": "2.13.1",
-    "@medusajs/medusa": "2.13.1"
+    "@medusajs/medusa": "2.13.1",
+    "react-quill": "^2.0.0",
+    "resend": "^6.12.2"
   },
   "devDependencies": {
     "@medusajs/test-utils": "2.13.1",
