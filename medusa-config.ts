@@ -1,30 +1,32 @@
-// 👇 注意這裡多匯入了 Modules
 import { loadEnv, defineConfig, Modules } from '@medusajs/framework/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
+// 💡 這裡定義你的唐宋資料庫網址，作為備援
+const TANGSONG_DB_URL = "postgresql://postgres.qhefiwluztdmxractwln:jofja5-patZih-hihfet@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres"
+
 module.exports = defineConfig({
-  admin: {
-    disable: process.env.VERCEL === '1' ? false : process.env.NODE_ENV === 'production',
-  },
   projectConfig: {
-    databaseUrl: process.env.DATABASE_URL,
-    redisUrl: process.env.NODE_ENV === 'development' ? undefined : process.env.REDIS_URL,
+    // 🚀 修改這裡：優先用環境變數，沒有的話就用上面定義的網址
+    databaseUrl: process.env.DATABASE_URL || TANGSONG_DB_URL, 
     
+    redisUrl: process.env.REDIS_URL, 
     databaseDriverOptions: {
-      connectionTimeoutMillis: 10000,
-      idleTimeoutMillis: 30000,
-      max: 10,
       ssl: { rejectUnauthorized: false }, 
     },
-
     http: {
-      storeCors: process.env.STORE_CORS!,
-      adminCors: process.env.ADMIN_CORS!,
-      authCors: process.env.AUTH_CORS!,
+      storeCors: process.env.STORE_CORS || "http://localhost:3000",
+      adminCors: process.env.ADMIN_CORS || "http://localhost:7001,http://localhost:9000",
+      authCors: process.env.AUTH_CORS || "http://localhost:3000",
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
+  },
+  admin: {
+    // 🚀 沿用你成功的舊專案邏輯
+    disable: process.env.VERCEL === "1" ? false : process.env.NODE_ENV === 'production', 
+    path: process.env.VERCEL === "1" ? "/" : "/app",
+    backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
   },
   modules: {
     blog: {
