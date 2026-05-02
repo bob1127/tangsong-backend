@@ -17,6 +17,10 @@
       "destination": "https://tangsong-production.up.railway.app/uploads/:path*"
     },
     {
+      "source": "/assets/:path*",
+      "destination": "https://tangsong-production.up.railway.app/assets/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
