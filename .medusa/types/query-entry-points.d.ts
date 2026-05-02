@@ -17,48 +17,6 @@ export type Scalars = {
   JSON: { input: Record<string, unknown>; output: Record<string, unknown>; }
 };
 
-export type ArticleSchemaTypeEnum =
-  | 'Article'
-  | 'BlogPost'
-  | 'NewsArticle';
-
-export type Article = {
-  __typename?: 'Article';
-  id: Scalars['ID']['output'];
-  title: Scalars['String']['output'];
-  handle: Scalars['String']['output'];
-  content: Scalars['String']['output'];
-  thumbnail: Maybe<Scalars['String']['output']>;
-  seo_title: Maybe<Scalars['String']['output']>;
-  seo_description: Maybe<Scalars['String']['output']>;
-  seo_keywords: Maybe<Scalars['String']['output']>;
-  schema_type: ArticleSchemaTypeEnum;
-  schema_data: Maybe<Scalars['JSON']['output']>;
-  faq_schema: Maybe<Scalars['JSON']['output']>;
-  is_published: Scalars['Boolean']['output'];
-  created_at: Scalars['DateTime']['output'];
-  updated_at: Scalars['DateTime']['output'];
-  deleted_at: Maybe<Scalars['DateTime']['output']>;
-};
-
-export type MetalPrice = {
-  __typename?: 'MetalPrice';
-  id: Scalars['ID']['output'];
-  fetch_timestamp: Scalars['DateTime']['output'];
-  raw_rates_data: Scalars['JSON']['output'];
-  spot_gold_usd_oz: Scalars['Int']['output'];
-  spot_silver_usd_oz: Scalars['Int']['output'];
-  spot_platinum_usd_oz: Scalars['Int']['output'];
-  spot_palladium_usd_oz: Maybe<Scalars['Int']['output']>;
-  exchange_rate_usd_twd: Scalars['Int']['output'];
-  base_gold_twd_qian: Scalars['Int']['output'];
-  base_silver_twd_qian: Scalars['Int']['output'];
-  base_platinum_twd_qian: Scalars['Int']['output'];
-  created_at: Scalars['DateTime']['output'];
-  updated_at: Scalars['DateTime']['output'];
-  deleted_at: Maybe<Scalars['DateTime']['output']>;
-};
-
 export type StockLocationAddress = {
   __typename?: 'StockLocationAddress';
   id: Maybe<Scalars['ID']['output']>;
@@ -1791,6 +1749,24 @@ export type UserPreference = {
   deleted_at: Maybe<Scalars['DateTime']['output']>;
 };
 
+export type MetalPrice = {
+  __typename?: 'MetalPrice';
+  id: Scalars['ID']['output'];
+  fetch_timestamp: Scalars['DateTime']['output'];
+  raw_rates_data: Scalars['JSON']['output'];
+  spot_gold_usd_oz: Scalars['Int']['output'];
+  spot_silver_usd_oz: Scalars['Int']['output'];
+  spot_platinum_usd_oz: Scalars['Int']['output'];
+  spot_palladium_usd_oz: Maybe<Scalars['Int']['output']>;
+  exchange_rate_usd_twd: Scalars['Int']['output'];
+  base_gold_twd_qian: Scalars['Int']['output'];
+  base_silver_twd_qian: Scalars['Int']['output'];
+  base_platinum_twd_qian: Scalars['Int']['output'];
+  created_at: Scalars['DateTime']['output'];
+  updated_at: Scalars['DateTime']['output'];
+  deleted_at: Maybe<Scalars['DateTime']['output']>;
+};
+
 export type WorkflowExecutionStateEnum =
   | 'not_started'
   | 'invoking'
@@ -1815,25 +1791,25 @@ export type WorkflowExecution = {
   deleted_at: Maybe<Scalars['DateTime']['output']>;
 };
 
-export type AuthIdentity = {
-  __typename?: 'AuthIdentity';
-  id: Scalars['ID']['output'];
-  provider_identities: Array<Maybe<ProviderIdentity>>;
-  app_metadata: Maybe<Scalars['JSON']['output']>;
-  created_at: Scalars['DateTime']['output'];
-  updated_at: Scalars['DateTime']['output'];
-  deleted_at: Maybe<Scalars['DateTime']['output']>;
-};
+export type ArticleSchemaTypeEnum =
+  | 'Article'
+  | 'BlogPost'
+  | 'NewsArticle';
 
-export type ProviderIdentity = {
-  __typename?: 'ProviderIdentity';
+export type Article = {
+  __typename?: 'Article';
   id: Scalars['ID']['output'];
-  entity_id: Scalars['String']['output'];
-  provider: Scalars['String']['output'];
-  auth_identity_id: Scalars['String']['output'];
-  auth_identity: AuthIdentity;
-  user_metadata: Maybe<Scalars['JSON']['output']>;
-  provider_metadata: Maybe<Scalars['JSON']['output']>;
+  title: Scalars['String']['output'];
+  handle: Scalars['String']['output'];
+  content: Scalars['String']['output'];
+  thumbnail: Maybe<Scalars['String']['output']>;
+  seo_title: Maybe<Scalars['String']['output']>;
+  seo_description: Maybe<Scalars['String']['output']>;
+  seo_keywords: Maybe<Scalars['String']['output']>;
+  schema_type: ArticleSchemaTypeEnum;
+  schema_data: Maybe<Scalars['JSON']['output']>;
+  faq_schema: Maybe<Scalars['JSON']['output']>;
+  is_published: Scalars['Boolean']['output'];
   created_at: Scalars['DateTime']['output'];
   updated_at: Scalars['DateTime']['output'];
   deleted_at: Maybe<Scalars['DateTime']['output']>;
@@ -2048,6 +2024,30 @@ export type Notification = {
   deleted_at: Maybe<Scalars['DateTime']['output']>;
 };
 
+export type AuthIdentity = {
+  __typename?: 'AuthIdentity';
+  id: Scalars['ID']['output'];
+  provider_identities: Array<Maybe<ProviderIdentity>>;
+  app_metadata: Maybe<Scalars['JSON']['output']>;
+  created_at: Scalars['DateTime']['output'];
+  updated_at: Scalars['DateTime']['output'];
+  deleted_at: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type ProviderIdentity = {
+  __typename?: 'ProviderIdentity';
+  id: Scalars['ID']['output'];
+  entity_id: Scalars['String']['output'];
+  provider: Scalars['String']['output'];
+  auth_identity_id: Scalars['String']['output'];
+  auth_identity: AuthIdentity;
+  user_metadata: Maybe<Scalars['JSON']['output']>;
+  provider_metadata: Maybe<Scalars['JSON']['output']>;
+  created_at: Scalars['DateTime']['output'];
+  updated_at: Scalars['DateTime']['output'];
+  deleted_at: Maybe<Scalars['DateTime']['output']>;
+};
+
 export type LinkCartPaymentCollection = {
   __typename?: 'LinkCartPaymentCollection';
   cart_id: Scalars['String']['output'];
@@ -2249,10 +2249,6 @@ export type LinkShippingOptionPriceSet = {
 
 declare module '@medusajs/framework/types' {
   interface RemoteQueryEntryPoints {
-    article: Article
-    articles: Article
-    metal_price: MetalPrice
-    metal_prices: MetalPrice
     stock_location_address: StockLocationAddress
     stock_location_addresses: StockLocationAddress
     stock_location: StockLocation
@@ -2406,12 +2402,12 @@ declare module '@medusajs/framework/types' {
     view_configurations: ViewConfiguration
     user_preference: UserPreference
     user_preferences: UserPreference
+    metal_price: MetalPrice
+    metal_prices: MetalPrice
     workflow_execution: WorkflowExecution
     workflow_executions: WorkflowExecution
-    auth_identity: AuthIdentity
-    auth_identities: AuthIdentity
-    provider_identity: ProviderIdentity
-    provider_identities: ProviderIdentity
+    article: Article
+    articles: Article
     file: any
     files: any
     fulfillment_address: any
@@ -2440,6 +2436,10 @@ declare module '@medusajs/framework/types' {
     shipping_profiles: ShippingProfile
     notification: Notification
     notifications: Notification
+    auth_identity: AuthIdentity
+    auth_identities: AuthIdentity
+    provider_identity: ProviderIdentity
+    provider_identities: ProviderIdentity
     cart_payment_collection: LinkCartPaymentCollection
     cart_payment_collections: LinkCartPaymentCollection
     cart_promotion: LinkCartPromotion

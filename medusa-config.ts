@@ -6,7 +6,6 @@ loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 module.exports = defineConfig({
   admin: {
     disable: process.env.VERCEL === '1' ? false : process.env.NODE_ENV === 'production',
-    // 🗑️ 刪除 path: "/"！讓 Admin 回到預設的 "/app"，把 "/" 還給後端 API
   },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
@@ -31,7 +30,7 @@ module.exports = defineConfig({
     blog: {
       resolve: "./src/modules/blog",
     },
-    // 👇 使用官方的 Modules.AUTH 常數來註冊
+    // 👇 註冊社群登入 Modules
     [Modules.AUTH]: {
       resolve: "@medusajs/auth",
       options: {
@@ -40,6 +39,28 @@ module.exports = defineConfig({
             resolve: "@medusajs/auth-emailpass",
             id: "emailpass",
           },
+         {
+            resolve: "@medusajs/auth-google",
+            id: "google",
+            options: {
+              clientId: process.env.GOOGLE_CLIENT_ID,
+              clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+              // 💡 關鍵：不要用變數組合，直接寫死本地端前端的接收網址！
+              callbackUrl: "http://localhost:8000/tw/callback/google",
+            },
+          },
+          // 🚀 加入 LINE 登入 (預留，若尚未安裝套件請先註解掉)
+          /*
+          {
+            resolve: "medusa-auth-line",
+            id: "line",
+            options: {
+              clientId: process.env.LINE_CLIENT_ID,
+              clientSecret: process.env.LINE_CLIENT_SECRET,
+              callbackUrl: `${process.env.STORE_CORS || "http://localhost:8000"}/callback/line`,
+            },
+          }
+          */
         ],
       },
     },
@@ -47,7 +68,6 @@ module.exports = defineConfig({
       resolve: "./src/modules/metals",
     },
     "file": {
-      // ... 這裡保留你原本 S3 的設定，不要動它
       resolve: "@medusajs/file",
       options: {
         providers: [
