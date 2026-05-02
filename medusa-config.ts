@@ -46,7 +46,7 @@ module.exports = defineConfig({
               clientId: process.env.GOOGLE_CLIENT_ID,
               clientSecret: process.env.GOOGLE_CLIENT_SECRET,
               // 💡 關鍵：不要用變數組合，直接寫死本地端前端的接收網址！
-              callbackUrl: "http://localhost:8000/tw/callback/google",
+              callbackUrl: `${process.env.STORE_CORS}/tw/callback/google`,
             },
           },
           // 🚀 加入 LINE 登入 (預留，若尚未安裝套件請先註解掉)
