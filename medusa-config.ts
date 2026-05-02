@@ -5,7 +5,7 @@ loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
 module.exports = defineConfig({
   admin: {
-    disable: process.env.VERCEL === '1' ? false : process.env.NODE_ENV === 'production',
+   disable: process.env.DISABLE_MEDUSA_ADMIN === "true" || false,
   },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
