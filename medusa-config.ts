@@ -47,11 +47,12 @@ module.exports = defineConfig({
             options: {
               clientId: process.env.GOOGLE_CLIENT_ID,
               clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-              // 💡 關鍵：不要用變數組合，直接寫死本地端前端的接收網址！
-              callbackUrl: `${process.env.STORE_CORS}/tw/callback/google`,
+              // 🚀 關鍵修正：改用獨立環境變數，避免跟 CORS 混在一起變亂碼！
+              // 如果 Railway 沒設變數，就先退回 localhost:8000 確保本地能測
+              callbackUrl: process.env.STORE_AUTH_CALLBACK_URL || "http://localhost:8000/tw/callback/google",
             },
           },
-          // 🚀 加入 LINE 登入 (預留，若尚未安裝套件請先註解掉)
+          // 🚀 加入 LINE 登入 (預留，因為尚未安裝套件，保持註解狀態！)
           /*
           {
             resolve: "medusa-auth-line",
@@ -59,7 +60,8 @@ module.exports = defineConfig({
             options: {
               clientId: process.env.LINE_CLIENT_ID,
               clientSecret: process.env.LINE_CLIENT_SECRET,
-              callbackUrl: `${process.env.STORE_CORS || "http://localhost:8000"}/callback/line`,
+              // LINE 也比照辦理，之後上線要改成正式網址
+              callbackUrl: process.env.STORE_AUTH_CALLBACK_URL_LINE || "http://localhost:8000/tw/callback/line",
             },
           }
           */
