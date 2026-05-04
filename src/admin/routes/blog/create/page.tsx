@@ -111,7 +111,7 @@ export default function CreateArticlePage() {
     );
   };
 
-  // 儲存文章 (武裝除錯版)
+  // 儲存文章 (武裝除錯 + 絕對路徑版)
   const handleSave = async () => {
     if (!title || !handle) return toast.error("標題與網址代稱不可為空！");
     setIsSaving(true);
@@ -135,10 +135,15 @@ export default function CreateArticlePage() {
       };
       console.log("📤 [BlogCreate] 即將送出的 Payload:", payload);
 
-      const res = await fetch("/admin/articles", {
+      // 🌟 定義後端網址：優先吃環境變數，若無則預設為正式機 Railway 網址
+      const backendUrl =
+        process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+        "https://tangsong-production.up.railway.app";
+
+      const res = await fetch(`${backendUrl}/admin/articles`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        credentials: "include", // 必須帶上，確保能讀取到登入 Cookie
         body: JSON.stringify(payload),
       });
 

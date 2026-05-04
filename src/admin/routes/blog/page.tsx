@@ -22,12 +22,18 @@ export default function BlogListPage() {
   const [articles, setArticles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  // 抓取文章列表 (武裝除錯版)
+
+  // 抓取文章列表 (武裝除錯 + 絕對路徑版)
   const fetchArticles = async () => {
     console.log("🚀 [BlogList] 開始抓取文章列表...");
     try {
-      const res = await fetch("/admin/articles", {
-        credentials: "include",
+      // 🌟 定義後端網址：優先吃環境變數，若無則預設為正式機 Railway 網址
+      const backendUrl =
+        process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+        "https://tangsong-production.up.railway.app";
+
+      const res = await fetch(`${backendUrl}/admin/articles`, {
+        credentials: "include", // 必須帶上，確保能讀取到登入 Cookie
       });
 
       console.log(
@@ -56,6 +62,7 @@ export default function BlogListPage() {
       setIsLoading(false);
     }
   };
+
   useEffect(() => {
     fetchArticles();
   }, []);
@@ -115,7 +122,6 @@ export default function BlogListPage() {
                     )}
                   </Table.Cell>
                   <Table.Cell className="text-right">
-                    {/* 💡 修正：加上 onClick 跳轉到編輯頁面 */}
                     <Button
                       variant="secondary"
                       size="small"
