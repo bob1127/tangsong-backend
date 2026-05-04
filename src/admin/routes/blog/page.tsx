@@ -22,17 +22,36 @@ export default function BlogListPage() {
   const [articles, setArticles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-  // 抓取文章列表
+  // 抓取文章列表 (武裝除錯版)
   const fetchArticles = async () => {
+    console.log("🚀 [BlogList] 開始抓取文章列表...");
     try {
-      // 🌟 關鍵修正：加上 credentials: "include"
       const res = await fetch("/admin/articles", {
         credentials: "include",
       });
-      const data = await res.json();
+
+      console.log(
+        `📥 [BlogList] API 回應狀態: ${res.status} ${res.statusText}`,
+      );
+
+      // 💡 先把回傳結果轉成純文字，避免 JSON.parse 直接死掉
+      const textData = await res.text();
+      console.log("📦 [BlogList] 後端原始回傳內容:", textData);
+
+      if (!res.ok) {
+        throw new Error(`伺服器拒絕請求 (${res.status}): ${textData}`);
+      }
+
+      // 確認有資料才轉 JSON
+      const data = textData ? JSON.parse(textData) : {};
+      console.log("✅ [BlogList] 成功解析的 JSON 資料:", data);
+
       setArticles(data.articles || []);
-    } catch (error) {
-      toast.error("無法載入文章列表");
+    } catch (error: any) {
+      console.error("❌ [BlogList] 抓取過程發生嚴重錯誤:", error);
+      toast.error("無法載入文章列表", {
+        description: error.message || "請開啟 F12 查看詳細錯誤",
+      });
     } finally {
       setIsLoading(false);
     }

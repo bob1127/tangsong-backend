@@ -111,36 +111,56 @@ export default function CreateArticlePage() {
     );
   };
 
-  // ==========================
-  // 💡 關鍵修正 3：新增儲存時也強制使用 faq_schema 送出
-  // ==========================
+  // 儲存文章 (武裝除錯版)
   const handleSave = async () => {
     if (!title || !handle) return toast.error("標題與網址代稱不可為空！");
     setIsSaving(true);
+
+    console.log("🚀 [BlogCreate] 準備送出文章...");
+
     try {
       const schemaData = JSON.parse(generateJsonLdPreview());
+
+      // 💡 把準備送出的 Payload 先整理出來印在 Console 檢查
+      const payload = {
+        title,
+        handle,
+        content,
+        is_published: isPublished === "true",
+        seo_title: seoTitle,
+        seo_description: seoDesc,
+        seo_keywords: seoKeywords,
+        schema_type: schemaType,
+        faq_schema: schemaData,
+      };
+      console.log("📤 [BlogCreate] 即將送出的 Payload:", payload);
+
       const res = await fetch("/admin/articles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          title,
-          handle,
-          content,
-          is_published: isPublished === "true",
-          seo_title: seoTitle,
-          seo_description: seoDesc,
-          seo_keywords: seoKeywords,
-          schema_type: schemaType,
-          // 💡 強制使用資料庫認識的名字！
-          faq_schema: schemaData,
-        }),
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("儲存失敗");
+
+      console.log(
+        `📥 [BlogCreate] API 回應狀態: ${res.status} ${res.statusText}`,
+      );
+
+      // 💡 解析前先看原始字串，抓出後端可能吐出的詳細錯誤訊息
+      const textData = await res.text();
+      console.log("📦 [BlogCreate] 後端原始回傳內容:", textData);
+
+      if (!res.ok) {
+        throw new Error(`儲存失敗 (${res.status}): ${textData}`);
+      }
+
       toast.success("成功", { description: "文章已成功儲存！" });
       navigate("/blog");
     } catch (error: any) {
-      toast.error("發生錯誤", { description: error.message });
+      console.error("❌ [BlogCreate] 儲存過程發生嚴重錯誤:", error);
+      toast.error("發生錯誤", {
+        description: error.message || "請開啟 F12 查看詳細錯誤",
+      });
     } finally {
       setIsSaving(false);
     }
