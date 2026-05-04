@@ -88,5 +88,5 @@ export const config = {
   name: "update-metals-price-job",
   // ⚠️ 為了測試，我們先改回每分鐘執行一次。
   // 成功看到終端機印出綠字後，請務必記得改回 "0 * * * *" 喔！
-  schedule: "* * * * *", 
+  schedule: "0 * * * *", 
 }
