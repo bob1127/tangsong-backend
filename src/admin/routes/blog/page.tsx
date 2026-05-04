@@ -22,11 +22,13 @@ export default function BlogListPage() {
   const [articles, setArticles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
-
   // 抓取文章列表
   const fetchArticles = async () => {
     try {
-      const res = await fetch("/admin/articles");
+      // 🌟 關鍵修正：加上 credentials: "include"
+      const res = await fetch("/admin/articles", {
+        credentials: "include",
+      });
       const data = await res.json();
       setArticles(data.articles || []);
     } catch (error) {
@@ -35,7 +37,6 @@ export default function BlogListPage() {
       setIsLoading(false);
     }
   };
-
   useEffect(() => {
     fetchArticles();
   }, []);

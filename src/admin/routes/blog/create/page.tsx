@@ -122,6 +122,7 @@ export default function CreateArticlePage() {
       const res = await fetch("/admin/articles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           title,
           handle,
