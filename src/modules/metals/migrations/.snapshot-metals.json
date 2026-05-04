@@ -106,6 +106,15 @@
           "nullable": false,
           "mappedType": "integer"
         },
+        "base_palladium_twd_qian": {
+          "name": "base_palladium_twd_qian",
+          "type": "integer",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "mappedType": "integer"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamptz",

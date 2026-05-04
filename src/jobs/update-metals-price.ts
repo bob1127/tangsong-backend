@@ -13,7 +13,7 @@ export default async function updateMetalsPrice(container: any) {
 
   try {
     logger.info("🔄 開始向 Metals-API 獲取最新國際盤價...")
-    // 網址參數已經有 XPD (鈀金) 了，非常棒！
+    // 網址參數補上了 XPD (鈀金)
     const res = await fetch(`https://metals-api.com/api/latest?access_key=${apiKey}&base=USD&symbols=XAU,XPT,XAG,XPD,TWD`)
     const data = await res.json()
     if (!data.success) throw new Error("API 失敗")
@@ -25,14 +25,12 @@ export default async function updateMetalsPrice(container: any) {
     const goldOzUsd = 1 / rawRates.XAU
     const platinumOzUsd = 1 / rawRates.XPT
     const silverOzUsd = 1 / rawRates.XAG
-    const palladiumOzUsd = rawRates.XPD ? (1 / rawRates.XPD) : 0 // 容錯處理
+    const palladiumOzUsd = rawRates.XPD ? (1 / rawRates.XPD) : null // 容錯處理
 
     // 本地成本基準價 (台幣 / 台錢)
     const goldQian = Math.round((goldOzUsd * usdToTwd) / 8.2944)
     const platQian = Math.round((platinumOzUsd * usdToTwd) / 8.2944)
     const silverQian = Math.round((silverOzUsd * usdToTwd) / 8.2944)
-    // 🚀 關鍵補上：算出鈀金的台幣台錢基準價！
-    const palladiumQian = palladiumOzUsd > 0 ? Math.round((palladiumOzUsd * usdToTwd) / 8.2944) : 0
 
     // 瘦身後的 JSON，避免 Supabase 空間爆掉
     const cleanRates = {
@@ -50,7 +48,6 @@ export default async function updateMetalsPrice(container: any) {
       gold_price_qian: goldQian,
       platinum_price_qian: platQian,
       silver_price_qian: silverQian,
-      palladium_price_qian: palladiumQian, // 🚀 補上：存入快取給前端讀取
     }
 
     // ==========================================
@@ -63,22 +60,21 @@ export default async function updateMetalsPrice(container: any) {
     // 軌道 2：寫入實體資料庫 (對應我們剛剛更新的全新資料表結構)
     await metalsModuleService.createMetalPrices({
       fetch_timestamp: new Date(),
-      raw_rates_data: cleanRates,            
+      raw_rates_data: cleanRates,            // 只存 5 筆過濾後的 JSON，非常省空間
       
-      spot_gold_usd_oz: goldOzUsd,           
+      spot_gold_usd_oz: goldOzUsd,           // 存入國際現貨價
       spot_silver_usd_oz: silverOzUsd,
       spot_platinum_usd_oz: platinumOzUsd,
-      spot_palladium_usd_oz: palladiumOzUsd, // 現貨價 (你原本已經寫對了)
+      spot_palladium_usd_oz: palladiumOzUsd, // 存入鈀金現貨價
       
-      exchange_rate_usd_twd: usdToTwd,       
+      exchange_rate_usd_twd: usdToTwd,       // 存入即時匯率
       
-      base_gold_twd_qian: goldQian,          
+      base_gold_twd_qian: goldQian,          // 存入換算後的本地基準價
       base_silver_twd_qian: silverQian,
       base_platinum_twd_qian: platQian,
-      base_palladium_twd_qian: palladiumQian, // 🚀 補上：存進資料庫的欄位！
     })
 
-    logger.info(`✅ 金價已更新！快取與資料庫儲存成功 (今日黃金每錢成本: ${goldQian}, 鈀金: ${palladiumQian})`)
+    logger.info(`✅ 金價已更新！快取與資料庫儲存成功 (今日黃金每錢成本: ${goldQian})`)
   } catch (error: any) { 
     logger.error(`❌ 更新失敗: ${error?.message || error}`)
   }

@@ -31,5 +31,7 @@ export const MetalPrice = model.define("metal_price", {
   base_gold_twd_qian: model.number(),            // 黃金本地基準價 (每錢)
   base_silver_twd_qian: model.number(),          // 白銀本地基準價 (每錢)
   base_platinum_twd_qian: model.number(),        // 白金本地基準價 (每錢)
+  // 🚀 關鍵修復：幫鈀金開一個專屬欄位！
+  base_palladium_twd_qian: model.number().nullable(), // 鈀金本地基準價 (每錢)
 
 })
