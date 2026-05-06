@@ -17,11 +17,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
-// 🌟 統一設定後端網址
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
-  "https://tangsong-production.up.railway.app";
-
 export default function EditArticlePage() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -63,6 +58,17 @@ export default function EditArticlePage() {
     { name: string; text: string }[]
   >([]);
 
+  // 🌟 終極智慧判斷：放在元件內部，讓所有 API 請求都能共用
+  const isLocal =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1");
+
+  const BACKEND_URL = isLocal
+    ? ""
+    : process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+      "https://tangsong-production.up.railway.app";
+
   const addFaq = () => setFaqs([...faqs, { q: "", a: "" }]);
   const updateFaq = (i: number, f: "q" | "a", v: string) => {
     const n = [...faqs];
@@ -81,7 +87,7 @@ export default function EditArticlePage() {
     setHowToSteps(howToSteps.filter((_, idx) => idx !== i));
 
   // ==========================
-  // 💡 圖片上傳處理邏輯 (已修正為絕對路徑)
+  // 💡 圖片上傳處理邏輯
   // ==========================
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -118,7 +124,7 @@ export default function EditArticlePage() {
   };
 
   // ==========================
-  // 💡 讀取文章邏輯 (已修正為絕對路徑與除錯輸出)
+  // 💡 讀取文章邏輯
   // ==========================
   useEffect(() => {
     const fetchArticle = async () => {
@@ -236,7 +242,7 @@ export default function EditArticlePage() {
       }
     };
     fetchArticle();
-  }, [id]);
+  }, [id, BACKEND_URL]);
 
   const generateJsonLdPreview = () => {
     const graph: any[] = [];
@@ -308,7 +314,7 @@ export default function EditArticlePage() {
   };
 
   // ==========================
-  // 💡 更新文章邏輯 (已修正為絕對路徑)
+  // 💡 更新文章邏輯
   // ==========================
   const handleUpdate = async () => {
     if (!title || !handle) return toast.error("標題與網址代稱不可為空！");
@@ -355,7 +361,7 @@ export default function EditArticlePage() {
   };
 
   // ==========================
-  // 💡 刪除文章邏輯 (已修正為絕對路徑)
+  // 💡 刪除文章邏輯
   // ==========================
   const handleDelete = async () => {
     if (!window.confirm("確定要刪除這篇文章嗎？此動作無法復原！")) return;

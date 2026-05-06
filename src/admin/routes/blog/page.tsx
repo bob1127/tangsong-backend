@@ -23,14 +23,26 @@ export default function BlogListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 抓取文章列表 (武裝除錯 + 絕對路徑版)
+  // 抓取文章列表 (武裝除錯 + 終極智慧網址判斷)
   const fetchArticles = async () => {
     console.log("🚀 [BlogList] 開始抓取文章列表...");
     try {
-      // 🌟 定義後端網址：優先吃環境變數，若無則預設為正式機 Railway 網址
-      const backendUrl =
-        process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
-        "https://tangsong-production.up.railway.app";
+      // 🌟 終極智慧判斷：明確指定本地端的兩種可能網址
+      const isLocal =
+        typeof window !== "undefined" &&
+        (window.location.hostname === "localhost" ||
+          window.location.hostname === "127.0.0.1");
+
+      // 如果是本地端，使用相對路徑 "" (讀取本機 DB)
+      // 如果是正式站，才使用環境變數或 Railway 網址
+      const backendUrl = isLocal
+        ? ""
+        : process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+          "https://tangsong-production.up.railway.app";
+
+      console.log(
+        `🔗 [BlogList] 目前使用的後端 API 路徑: ${backendUrl}/admin/articles`,
+      );
 
       const res = await fetch(`${backendUrl}/admin/articles`, {
         credentials: "include", // 必須帶上，確保能讀取到登入 Cookie
