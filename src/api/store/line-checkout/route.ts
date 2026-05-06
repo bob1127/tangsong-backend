@@ -13,6 +13,8 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     const displayId = `#RSV-${shortId}`;
     
     const itemsList = cartItems?.map((item: any) => `- ${item.title} x ${item.quantity}`).join('\n') || "無商品";
+    
+    // 👇 這裡就是信件內容！你已經把 visitDate 放進去了，所以信件一定會有時間
     const messageText = `[唐宋珠寶 - 新預約單]\n\n預約單號: ${displayId}\n顧客: ${lastName || ""} ${firstName || ""}\n電話: ${phone || "未提供"}\n預計來店: ${visitDate || "未指定"}\nEmail: ${email}\n\n【預約內容】\n${itemsList}\n\n請準備於 LINE 接收客人的訊息！`;
 
     // 🚀 第一步：立刻回應成功給前端，讓客人秒跳 QR Code
@@ -20,20 +22,22 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
 
     // 💡 第二步：背景非同步處理通知任務
     (async () => {
-      // 📧 任務 A: 使用 Resend 發送 Email (穩定且無視 IPv6 限制)
+      // 📧 任務 A: 使用 Resend 發送 Email
       const notifyEmail = process.env.NOTIFY_EMAIL; 
       
       if (notifyEmail) {
-        try {
-          await resend.emails.send({
-            from: 'onboarding@resend.dev', // 預設測試發件人
-            to: notifyEmail,
-            subject: `[新預約] 唐宋珠寶預約單 ${displayId}`,
-            text: messageText,
-          });
-          console.log("✅ [Email] Resend 寄信成功！");
-        } catch (emailErr) {
-          console.error("❌ [Email] Resend 寄信失敗:", emailErr);
+        // 🚨 修正：Resend 的錯誤攔截寫法，使用 { data, error } 來接回傳值
+        const { data, error } = await resend.emails.send({
+          from: 'onboarding@resend.dev', // 預設測試發件人
+          to: notifyEmail,               // 記得 Railway 裡的 NOTIFY_EMAIL 必須填 tangsongzhubao@gmail.com
+          subject: `[新預約] 唐宋珠寶預約單 ${displayId}`,
+          text: messageText,
+        });
+
+        if (error) {
+          console.error("❌ [Email] Resend 拒絕寄信，原因:", error);
+        } else {
+          console.log("✅ [Email] Resend 真的寄信成功啦！信件 ID:", data?.id);
         }
       }
 
