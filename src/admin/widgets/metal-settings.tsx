@@ -5,12 +5,16 @@ import { useState, useEffect } from "react";
 const MetalSettingsWidget = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  // 💡 修正 1：把初始值全部改成字串，這樣輸入負號或刪除數字時才不會卡住
+
   const [settings, setSettings] = useState({
-    gold_sell_margin: "800",
-    gold_buy_margin: "-200",
-    k18_buy_price: "10590",
-    k14_buy_price: "7942",
+    gold_sell: "",
+    gold_buy: "",
+    k18_buy: "",
+    k14_buy: "",
+    pt950_sell: "",
+    pt950_buy: "",
+    pd_sell: "",
+    pd_buy: "",
   });
 
   useEffect(() => {
@@ -21,12 +25,15 @@ const MetalSettingsWidget = () => {
 
         const data = await res.json();
         if (data.settings && Object.keys(data.settings).length > 0) {
-          // 確保撈回來的資料轉成字串供輸入框使用
           setSettings({
-            gold_sell_margin: String(data.settings.gold_sell_margin ?? "800"),
-            gold_buy_margin: String(data.settings.gold_buy_margin ?? "-200"),
-            k18_buy_price: String(data.settings.k18_buy_price ?? "10590"),
-            k14_buy_price: String(data.settings.k14_buy_price ?? "7942"),
+            gold_sell: String(data.settings.gold_sell ?? ""),
+            gold_buy: String(data.settings.gold_buy ?? ""),
+            k18_buy: String(data.settings.k18_buy ?? ""),
+            k14_buy: String(data.settings.k14_buy ?? ""),
+            pt950_sell: String(data.settings.pt950_sell ?? ""),
+            pt950_buy: String(data.settings.pt950_buy ?? ""),
+            pd_sell: String(data.settings.pd_sell ?? ""),
+            pd_buy: String(data.settings.pd_buy ?? ""),
           });
         }
       } catch (err) {
@@ -41,12 +48,15 @@ const MetalSettingsWidget = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // 💡 傳送前，將字串轉回數字確保資料庫乾淨
       const payload = {
-        gold_sell_margin: Number(settings.gold_sell_margin),
-        gold_buy_margin: Number(settings.gold_buy_margin),
-        k18_buy_price: Number(settings.k18_buy_price),
-        k14_buy_price: Number(settings.k14_buy_price),
+        gold_sell: Number(settings.gold_sell) || 0,
+        gold_buy: Number(settings.gold_buy) || 0,
+        k18_buy: Number(settings.k18_buy) || 0,
+        k14_buy: Number(settings.k14_buy) || 0,
+        pt950_sell: Number(settings.pt950_sell) || 0,
+        pt950_buy: Number(settings.pt950_buy) || 0,
+        pd_sell: Number(settings.pd_sell) || 0,
+        pd_buy: Number(settings.pd_buy) || 0,
       };
 
       const res = await fetch("/admin/metal-settings", {
@@ -57,8 +67,8 @@ const MetalSettingsWidget = () => {
 
       if (!res.ok) throw new Error("儲存失敗");
 
-      toast.success("金價設定已更新", {
-        description: "前台牌告價將立即套用新的設定。",
+      toast.success("牌告價設定已更新", {
+        description: "前台即時行情將立即套用新的價格。",
       });
     } catch (err) {
       toast.error("儲存失敗，請檢查網路連線");
@@ -67,83 +77,179 @@ const MetalSettingsWidget = () => {
     }
   };
 
-  if (loading) return <div className="p-8 text-stone-500">載入設定中...</div>;
+  const handleChange = (key: string, value: string) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
+  if (loading)
+    return <div className="p-4 md:p-8 text-stone-500">載入設定中...</div>;
 
   return (
-    <Container className="p-8 mb-4 border border-gray-200 shadow-sm rounded-lg bg-white">
-      <div className="flex items-center justify-between mb-6 border-b pb-4">
-        <Heading level="h1" className="text-xl text-gray-900 font-bold">
-          唐宋珠寶 - 每日牌告價控制台
+    // 💡 RWD: 手機版縮小 Padding，桌機版恢復 p-8
+    <Container className="p-4 md:p-8 mb-4 border border-gray-200 shadow-sm rounded-lg bg-white">
+      {/* 💡 RWD: 頂部標題區塊在手機版改為上下排列，確保按鈕好按 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8 border-b pb-4">
+        <Heading
+          level="h1"
+          className="text-lg md:text-xl text-gray-900 font-bold"
+        >
+          唐宋珠寶 - 每日牌告價
         </Heading>
         <Button
           variant="primary"
           onClick={handleSave}
           isLoading={saving}
-          className="bg-[#8B2500] hover:bg-[#5c1800] text-white"
+          className="bg-[#8B2500] hover:bg-[#5c1800] text-white w-full sm:w-auto"
         >
           {saving ? "儲存中..." : "儲存設定"}
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-8">
-        <div className="flex flex-col gap-4 p-5 bg-stone-50 rounded-md border border-stone-100">
-          <Heading level="h2" className="text-lg text-stone-800">
-            純金加減價 (基於國際盤價)
+      {/* 💡 RWD: 外層 Grid 在手機版單欄 (grid-cols-1)，大螢幕雙欄 (lg:grid-cols-2) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+        {/* 1. 黃金飾金 */}
+        {/* 💡 RWD: 卡片內部 Padding 在手機版改小一點 (p-4)，大螢幕 (p-6) */}
+        <div className="flex flex-col gap-4 p-4 md:p-6 bg-stone-50 rounded-md border border-stone-100">
+          <Heading
+            level="h2"
+            className="text-base md:text-lg text-stone-800 font-bold border-b pb-2"
+          >
+            1. 黃金飾金 (每錢)
           </Heading>
-          <div>
-            <label className="text-sm font-medium text-stone-600 mb-2 block">
-              賣出加價 (例如: 800)
-            </label>
-            {/* 💡 修正 2：onChange 直接吃 e.target.value (字串) */}
-            <Input
-              type="number"
-              value={settings.gold_sell_margin}
-              onChange={(e) =>
-                setSettings({ ...settings, gold_sell_margin: e.target.value })
-              }
-            />
-          </div>
-          <div>
-            <label className="text-sm font-medium text-stone-600 mb-2 block">
-              回收減價 (例如: -200)
-            </label>
-            <Input
-              type="number"
-              value={settings.gold_buy_margin}
-              onChange={(e) =>
-                setSettings({ ...settings, gold_buy_margin: e.target.value })
-              }
-            />
+          {/* 💡 RWD: 輸入框群組在極小螢幕(直式手機)單欄，橫式手機/桌機才雙欄 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs md:text-sm font-medium text-stone-600 mb-1.5 block">
+                賣出價
+              </label>
+              <Input
+                type="number"
+                placeholder="例如: 18010"
+                value={settings.gold_sell}
+                onChange={(e) => handleChange("gold_sell", e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="text-xs md:text-sm font-medium text-stone-600 mb-1.5 block">
+                回收價
+              </label>
+              <Input
+                type="number"
+                placeholder="例如: 16699"
+                value={settings.gold_buy}
+                onChange={(e) => handleChange("gold_buy", e.target.value)}
+                className="w-full"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col gap-4 p-5 bg-stone-50 rounded-md border border-stone-100">
-          <Heading level="h2" className="text-lg text-stone-800">
-            K 金每日收購價 (每錢)
+        {/* 2. K金系列 */}
+        <div className="flex flex-col gap-4 p-4 md:p-6 bg-stone-50 rounded-md border border-stone-100">
+          <Heading
+            level="h2"
+            className="text-base md:text-lg text-stone-800 font-bold border-b pb-2"
+          >
+            2. K 金系列 (每錢回收價)
           </Heading>
-          <div>
-            <label className="text-sm font-medium text-stone-600 mb-2 block">
-              18K 金 收購價
-            </label>
-            <Input
-              type="number"
-              value={settings.k18_buy_price}
-              onChange={(e) =>
-                setSettings({ ...settings, k18_buy_price: e.target.value })
-              }
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs md:text-sm font-medium text-stone-600 mb-1.5 block">
+                18K 金 回收價
+              </label>
+              <Input
+                type="number"
+                placeholder="例如: 10458"
+                value={settings.k18_buy}
+                onChange={(e) => handleChange("k18_buy", e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="text-xs md:text-sm font-medium text-stone-600 mb-1.5 block">
+                14K 金 回收價
+              </label>
+              <Input
+                type="number"
+                placeholder="例如: 7942"
+                value={settings.k14_buy}
+                onChange={(e) => handleChange("k14_buy", e.target.value)}
+                className="w-full"
+              />
+            </div>
           </div>
-          <div>
-            <label className="text-sm font-medium text-stone-600 mb-2 block">
-              14K 金 收購價
-            </label>
-            <Input
-              type="number"
-              value={settings.k14_buy_price}
-              onChange={(e) =>
-                setSettings({ ...settings, k14_buy_price: e.target.value })
-              }
-            />
+        </div>
+
+        {/* 3. 白金 Pt950 */}
+        <div className="flex flex-col gap-4 p-4 md:p-6 bg-stone-50 rounded-md border border-stone-100">
+          <Heading
+            level="h2"
+            className="text-base md:text-lg text-stone-800 font-bold border-b pb-2"
+          >
+            3. 白金 Pt950 (每錢)
+          </Heading>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs md:text-sm font-medium text-stone-600 mb-1.5 block">
+                賣出價
+              </label>
+              <Input
+                type="number"
+                placeholder="例如: 9269"
+                value={settings.pt950_sell}
+                onChange={(e) => handleChange("pt950_sell", e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="text-xs md:text-sm font-medium text-stone-600 mb-1.5 block">
+                回收價
+              </label>
+              <Input
+                type="number"
+                placeholder="例如: 7269"
+                value={settings.pt950_buy}
+                onChange={(e) => handleChange("pt950_buy", e.target.value)}
+                className="w-full"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 4. 鈀金 Pd */}
+        <div className="flex flex-col gap-4 p-4 md:p-6 bg-stone-50 rounded-md border border-stone-100">
+          <Heading
+            level="h2"
+            className="text-base md:text-lg text-stone-800 font-bold border-b pb-2"
+          >
+            4. 鈀金 Pd (每錢)
+          </Heading>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs md:text-sm font-medium text-stone-600 mb-1.5 block">
+                賣出價
+              </label>
+              <Input
+                type="number"
+                placeholder="例如: 7079"
+                value={settings.pd_sell}
+                onChange={(e) => handleChange("pd_sell", e.target.value)}
+                className="w-full"
+              />
+            </div>
+            <div>
+              <label className="text-xs md:text-sm font-medium text-stone-600 mb-1.5 block">
+                回收價
+              </label>
+              <Input
+                type="number"
+                placeholder="例如: 5079"
+                value={settings.pd_buy}
+                onChange={(e) => handleChange("pd_buy", e.target.value)}
+                className="w-full"
+              />
+            </div>
           </div>
         </div>
       </div>

@@ -15,9 +15,10 @@ module.exports = defineConfig({
       ssl: { rejectUnauthorized: false }, 
     },
     http: {
-      storeCors: process.env.STORE_CORS || "http://localhost:3000",
+      // 🚀 核心修正：將 localhost:8000 加進白名單，避免 API 鑰匙被攔截
+      storeCors: process.env.STORE_CORS || "http://localhost:3000,http://localhost:8000",
       adminCors: process.env.ADMIN_CORS || "http://localhost:7001,http://localhost:9000",
-      authCors: process.env.AUTH_CORS || "http://localhost:3000",
+      authCors: process.env.AUTH_CORS || "http://localhost:3000,http://localhost:8000",
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
