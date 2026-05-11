@@ -50,7 +50,9 @@ module.exports = defineConfig({
               clientSecret: process.env.GOOGLE_CLIENT_SECRET,
               // 🚀 關鍵修正：改用獨立環境變數，避免跟 CORS 混在一起變亂碼！
               // 如果 Railway 沒設變數，就先退回 localhost:8000 確保本地能測
-              callbackUrl: process.env.STORE_AUTH_CALLBACK_URL || "http://localhost:8000/tw/callback/google",
+            callbackUrl: process.env.NODE_ENV === "production" 
+                ? "https://www.tangsong.com.tw/tw/callback/google" 
+                : "http://localhost:8000/tw/callback/google",
             },
           },
           // 🚀 加入 LINE 登入 (預留，因為尚未安裝套件，保持註解狀態！)
