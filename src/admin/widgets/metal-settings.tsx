@@ -17,7 +17,8 @@ const MetalSettingsWidget = () => {
     pd_buy: "",
   });
 
-  // 確保抓到正確的 Railway 後端網址
+  // 🚀 關鍵 1：獲取後端網址 (確保在 Vercel 也能讀到)
+  // 如果 Vercel 沒設，就退回相對路徑 (Medusa Admin 會自動處理)
   const backendUrl =
     process.env.MEDUSA_BACKEND_URL ||
     process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
@@ -26,15 +27,18 @@ const MetalSettingsWidget = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
+        // 🚀 關鍵 2：加上 credentials: "include" 確保攜帶 Cookie
         const res = await fetch(`${backendUrl}/admin/metal-settings`, {
-          // 🚀 關鍵修正 1：強制攜帶管理員 Cookie 到後端
+          method: "GET",
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
         });
 
-        if (!res.ok) throw new Error(`狀態碼: ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`狀態碼: ${res.status}`);
+        }
 
         const data = await res.json();
         if (data.settings && Object.keys(data.settings).length > 0) {
@@ -50,7 +54,7 @@ const MetalSettingsWidget = () => {
           });
         }
       } catch (err: any) {
-        console.error("無法載入設定", err);
+        console.error("讀取設定失敗:", err);
       } finally {
         setLoading(false);
       }
@@ -72,21 +76,25 @@ const MetalSettingsWidget = () => {
         pd_buy: Number(settings.pd_buy) || 0,
       };
 
+      // 🚀 關鍵 3：儲存時一樣帶上 credentials
       const res = await fetch(`${backendUrl}/admin/metal-settings`, {
         method: "POST",
-        // 🚀 關鍵修正 2：強制攜帶管理員 Cookie 到後端
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error(`狀態碼: ${res.status}`);
+      if (!res.ok) {
+        throw new Error(`狀態碼: ${res.status}`);
+      }
 
       toast.success("牌告價設定已更新", {
         description: "前台即時行情將立即套用新的價格。",
       });
     } catch (err: any) {
-      toast.error(`儲存失敗 (${err.message || "未知錯誤"})`);
+      toast.error(`儲存失敗 (${err.message || "請檢查網路連線"})`);
       console.error("儲存失敗詳細錯誤:", err);
     } finally {
       setSaving(false);
