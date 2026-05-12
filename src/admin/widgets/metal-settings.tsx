@@ -17,11 +17,26 @@ const MetalSettingsWidget = () => {
     pd_buy: "",
   });
 
+  // 🚀 關鍵修正：抓取環境變數中的後端網址
+  // 在 Vercel 上，這會抓到你設定的 Railway 網址；在本地則抓到 localhost:9000
+  const backendUrl =
+    process.env.MEDUSA_BACKEND_URL ||
+    process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+    "";
+
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const res = await fetch("/admin/metal-settings");
-        if (!res.ok) throw new Error("無法讀取設定");
+        // 🚀 關鍵修正：加上完整的 backendUrl
+        const res = await fetch(`${backendUrl}/admin/metal-settings`, {
+          // 確保攜帶跨網域的驗證資訊 (Cookie/Token)
+          credentials: "omit", // 或 "include" 視你的 CORS 設定而定
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!res.ok) throw new Error(`無法讀取設定 (狀態碼: ${res.status})`);
 
         const data = await res.json();
         if (data.settings && Object.keys(data.settings).length > 0) {
@@ -36,14 +51,15 @@ const MetalSettingsWidget = () => {
             pd_buy: String(data.settings.pd_buy ?? ""),
           });
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("無法載入設定", err);
+        // 可以印出更詳細的錯誤到 console 方便除錯
       } finally {
         setLoading(false);
       }
     };
     fetchSettings();
-  }, []);
+  }, [backendUrl]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -59,19 +75,23 @@ const MetalSettingsWidget = () => {
         pd_buy: Number(settings.pd_buy) || 0,
       };
 
-      const res = await fetch("/admin/metal-settings", {
+      // 🚀 關鍵修正：加上完整的 backendUrl
+      const res = await fetch(`${backendUrl}/admin/metal-settings`, {
         method: "POST",
+        // 確保攜帶跨網域的驗證資訊
+        credentials: "omit",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error("儲存失敗");
+      if (!res.ok) throw new Error(`儲存失敗 (狀態碼: ${res.status})`);
 
       toast.success("牌告價設定已更新", {
         description: "前台即時行情將立即套用新的價格。",
       });
-    } catch (err) {
-      toast.error("儲存失敗，請檢查網路連線");
+    } catch (err: any) {
+      toast.error(`儲存失敗，請檢查網路連線 (${err.message || "未知錯誤"})`);
+      console.error("儲存失敗詳細錯誤:", err);
     } finally {
       setSaving(false);
     }
