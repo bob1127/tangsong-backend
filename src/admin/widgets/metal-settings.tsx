@@ -17,8 +17,7 @@ const MetalSettingsWidget = () => {
     pd_buy: "",
   });
 
-  // 🚀 關鍵修正：抓取環境變數中的後端網址
-  // 在 Vercel 上，這會抓到你設定的 Railway 網址；在本地則抓到 localhost:9000
+  // 確保抓到正確的 Railway 後端網址
   const backendUrl =
     process.env.MEDUSA_BACKEND_URL ||
     process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
@@ -27,16 +26,15 @@ const MetalSettingsWidget = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        // 🚀 關鍵修正：加上完整的 backendUrl
         const res = await fetch(`${backendUrl}/admin/metal-settings`, {
-          // 確保攜帶跨網域的驗證資訊 (Cookie/Token)
-          credentials: "omit", // 或 "include" 視你的 CORS 設定而定
+          // 🚀 關鍵修正 1：強制攜帶管理員 Cookie 到後端
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
         });
 
-        if (!res.ok) throw new Error(`無法讀取設定 (狀態碼: ${res.status})`);
+        if (!res.ok) throw new Error(`狀態碼: ${res.status}`);
 
         const data = await res.json();
         if (data.settings && Object.keys(data.settings).length > 0) {
@@ -53,7 +51,6 @@ const MetalSettingsWidget = () => {
         }
       } catch (err: any) {
         console.error("無法載入設定", err);
-        // 可以印出更詳細的錯誤到 console 方便除錯
       } finally {
         setLoading(false);
       }
@@ -75,22 +72,21 @@ const MetalSettingsWidget = () => {
         pd_buy: Number(settings.pd_buy) || 0,
       };
 
-      // 🚀 關鍵修正：加上完整的 backendUrl
       const res = await fetch(`${backendUrl}/admin/metal-settings`, {
         method: "POST",
-        // 確保攜帶跨網域的驗證資訊
-        credentials: "omit",
+        // 🚀 關鍵修正 2：強制攜帶管理員 Cookie 到後端
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error(`儲存失敗 (狀態碼: ${res.status})`);
+      if (!res.ok) throw new Error(`狀態碼: ${res.status}`);
 
       toast.success("牌告價設定已更新", {
         description: "前台即時行情將立即套用新的價格。",
       });
     } catch (err: any) {
-      toast.error(`儲存失敗，請檢查網路連線 (${err.message || "未知錯誤"})`);
+      toast.error(`儲存失敗 (${err.message || "未知錯誤"})`);
       console.error("儲存失敗詳細錯誤:", err);
     } finally {
       setSaving(false);
@@ -105,9 +101,7 @@ const MetalSettingsWidget = () => {
     return <div className="p-4 md:p-8 text-stone-500">載入設定中...</div>;
 
   return (
-    // 💡 RWD: 手機版縮小 Padding，桌機版恢復 p-8
     <Container className="p-4 md:p-8 mb-4 border border-gray-200 shadow-sm rounded-lg bg-white">
-      {/* 💡 RWD: 頂部標題區塊在手機版改為上下排列，確保按鈕好按 */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8 border-b pb-4">
         <Heading
           level="h1"
@@ -125,10 +119,8 @@ const MetalSettingsWidget = () => {
         </Button>
       </div>
 
-      {/* 💡 RWD: 外層 Grid 在手機版單欄 (grid-cols-1)，大螢幕雙欄 (lg:grid-cols-2) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* 1. 黃金飾金 */}
-        {/* 💡 RWD: 卡片內部 Padding 在手機版改小一點 (p-4)，大螢幕 (p-6) */}
+        {/* 黃金飾金 */}
         <div className="flex flex-col gap-4 p-4 md:p-6 bg-stone-50 rounded-md border border-stone-100">
           <Heading
             level="h2"
@@ -136,7 +128,6 @@ const MetalSettingsWidget = () => {
           >
             1. 黃金飾金 (每錢)
           </Heading>
-          {/* 💡 RWD: 輸入框群組在極小螢幕(直式手機)單欄，橫式手機/桌機才雙欄 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs md:text-sm font-medium text-stone-600 mb-1.5 block">
@@ -165,7 +156,7 @@ const MetalSettingsWidget = () => {
           </div>
         </div>
 
-        {/* 2. K金系列 */}
+        {/* K金系列 */}
         <div className="flex flex-col gap-4 p-4 md:p-6 bg-stone-50 rounded-md border border-stone-100">
           <Heading
             level="h2"
@@ -201,7 +192,7 @@ const MetalSettingsWidget = () => {
           </div>
         </div>
 
-        {/* 3. 白金 Pt950 */}
+        {/* 白金 Pt950 */}
         <div className="flex flex-col gap-4 p-4 md:p-6 bg-stone-50 rounded-md border border-stone-100">
           <Heading
             level="h2"
@@ -237,7 +228,7 @@ const MetalSettingsWidget = () => {
           </div>
         </div>
 
-        {/* 4. 鈀金 Pd */}
+        {/* 鈀金 Pd */}
         <div className="flex flex-col gap-4 p-4 md:p-6 bg-stone-50 rounded-md border border-stone-100">
           <Heading
             level="h2"
