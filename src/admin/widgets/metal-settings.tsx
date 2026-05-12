@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 const MetalSettingsWidget = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [debugLog, setDebugLog] = useState<string>(""); // 顯示在畫面的除錯訊息
 
   const [settings, setSettings] = useState({
     gold_sell: "",
@@ -17,30 +18,78 @@ const MetalSettingsWidget = () => {
     pd_buy: "",
   });
 
-  // 🚀 關鍵 1：獲取後端網址 (確保在 Vercel 也能讀到)
-  // 如果 Vercel 沒設，就退回相對路徑 (Medusa Admin 會自動處理)
+  // 獲取後端網址
   const backendUrl =
     process.env.MEDUSA_BACKEND_URL ||
     process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
     "";
 
+  // 🚀 自訂的除錯專用 Fetch 函數
+  const debugFetch = async (endpoint: string, options: RequestInit = {}) => {
+    // 測試 1: 帶有完整網域的 URL
+    const fullUrl = `${backendUrl}${endpoint}`;
+    // 測試 2: 只有相對路徑 (像你的 product-seo-widget 一樣)
+    const relativeUrl = endpoint;
+
+    // 我們先印出當下的瀏覽器狀態
+    console.log("=========================================");
+    console.log(`🚨 [除錯雷達] 準備發送 API 請求`);
+    console.log(`🚨 [除錯雷達] 完整網址目標:`, fullUrl);
+    console.log(
+      `🚨 [除錯雷達] 當前瀏覽器所有的 Cookie:`,
+      document.cookie || "空 (Cookie 可能被攔截或設為 HttpOnly)",
+    );
+
+    // 統一加上 credentials
+    const fetchOptions = {
+      ...options,
+      credentials: "include" as RequestCredentials,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+    };
+
+    try {
+      // 我們先試相對路徑 (因為你的 product-seo-widget 也是用相對路徑成功的)
+      let targetUrl = relativeUrl;
+      console.log(`🚨 [除錯雷達] 嘗試打向相對路徑:`, targetUrl);
+
+      let res = await fetch(targetUrl, fetchOptions);
+
+      // 如果相對路徑失敗了，而且有設定 backendUrl，我們再試試絕對路徑
+      if (!res.ok && backendUrl) {
+        console.warn(
+          `⚠️ [除錯雷達] 相對路徑失敗 (${res.status})，改嘗試絕對路徑: ${fullUrl}`,
+        );
+        targetUrl = fullUrl;
+        res = await fetch(targetUrl, fetchOptions);
+      }
+
+      console.log(`🚨 [除錯雷達] 後端回應狀態碼:`, res.status);
+
+      // 把後端的回應轉成純文字，抓出真實死因！
+      const errorText = await res.text();
+      console.log(`🚨 [除錯雷達] 後端吐出的真實回應內容:`, errorText);
+
+      if (!res.ok) {
+        setDebugLog(
+          `狀態碼: ${res.status} | 回應: ${errorText.substring(0, 100)}`,
+        );
+        throw new Error(errorText);
+      }
+
+      return JSON.parse(errorText);
+    } catch (err: any) {
+      console.error("❌ [除錯雷達] 發生例外崩潰:", err);
+      throw err;
+    }
+  };
+
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        // 🚀 關鍵 2：加上 credentials: "include" 確保攜帶 Cookie
-        const res = await fetch(`${backendUrl}/admin/metal-settings`, {
-          method: "GET",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!res.ok) {
-          throw new Error(`狀態碼: ${res.status}`);
-        }
-
-        const data = await res.json();
+        const data = await debugFetch("/admin/metal-settings");
         if (data.settings && Object.keys(data.settings).length > 0) {
           setSettings({
             gold_sell: String(data.settings.gold_sell ?? ""),
@@ -54,7 +103,7 @@ const MetalSettingsWidget = () => {
           });
         }
       } catch (err: any) {
-        console.error("讀取設定失敗:", err);
+        // 初始讀取失敗不彈出 toast，只顯示在畫面和 console
       } finally {
         setLoading(false);
       }
@@ -64,6 +113,7 @@ const MetalSettingsWidget = () => {
 
   const handleSave = async () => {
     setSaving(true);
+    setDebugLog(""); // 清空之前的錯誤
     try {
       const payload = {
         gold_sell: Number(settings.gold_sell) || 0,
@@ -76,26 +126,16 @@ const MetalSettingsWidget = () => {
         pd_buy: Number(settings.pd_buy) || 0,
       };
 
-      // 🚀 關鍵 3：儲存時一樣帶上 credentials
-      const res = await fetch(`${backendUrl}/admin/metal-settings`, {
+      await debugFetch("/admin/metal-settings", {
         method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(payload),
       });
-
-      if (!res.ok) {
-        throw new Error(`狀態碼: ${res.status}`);
-      }
 
       toast.success("牌告價設定已更新", {
         description: "前台即時行情將立即套用新的價格。",
       });
     } catch (err: any) {
-      toast.error(`儲存失敗 (${err.message || "請檢查網路連線"})`);
-      console.error("儲存失敗詳細錯誤:", err);
+      toast.error(`儲存失敗，請查看下方除錯訊息`);
     } finally {
       setSaving(false);
     }
@@ -106,7 +146,11 @@ const MetalSettingsWidget = () => {
   };
 
   if (loading)
-    return <div className="p-4 md:p-8 text-stone-500">載入設定中...</div>;
+    return (
+      <div className="p-4 md:p-8 text-stone-500">
+        載入設定中 (請打開 F12 Console 查看日誌)...
+      </div>
+    );
 
   return (
     <Container className="p-4 md:p-8 mb-4 border border-gray-200 shadow-sm rounded-lg bg-white">
@@ -117,15 +161,25 @@ const MetalSettingsWidget = () => {
         >
           唐宋珠寶 - 每日牌告價
         </Heading>
-        <Button
-          variant="primary"
-          onClick={handleSave}
-          isLoading={saving}
-          className="bg-[#8B2500] hover:bg-[#5c1800] text-white w-full sm:w-auto"
-        >
-          {saving ? "儲存中..." : "儲存設定"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="primary"
+            onClick={handleSave}
+            isLoading={saving}
+            className="bg-[#8B2500] hover:bg-[#5c1800] text-white w-full sm:w-auto"
+          >
+            {saving ? "儲存中..." : "儲存設定"}
+          </Button>
+        </div>
       </div>
+
+      {/* 🚨 畫面上直接顯示除錯訊息，免去翻 Console 的麻煩 */}
+      {debugLog && (
+        <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 text-red-700 rounded-lg">
+          <p className="font-bold mb-1">⚠️ API 發生錯誤 (除錯模式)</p>
+          <p className="font-mono text-sm break-all">{debugLog}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         {/* 黃金飾金 */}
