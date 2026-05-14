@@ -1,5 +1,5 @@
 // src/admin/routes/blog/create/page.tsx
-import { useState } from "react";
+import { useState, useRef, useMemo } from "react";
 import {
   Container,
   Heading,
@@ -14,18 +14,23 @@ import {
 import { useNavigate } from "react-router-dom";
 
 // @ts-ignore
-import ReactQuill from "react-quill";
+import ReactQuill, { Quill } from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
 export default function CreateArticlePage() {
   const navigate = useNavigate();
+  const quillRef = useRef<ReactQuill>(null);
+
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<"content" | "seo">("seo");
+  const [isUploading, setIsUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"content" | "seo">("content");
 
   const [title, setTitle] = useState("");
   const [handle, setHandle] = useState("");
+  const [thumbnail, setThumbnail] = useState("");
   const [content, setContent] = useState("");
   const [isPublished, setIsPublished] = useState("false");
+
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDesc, setSeoDesc] = useState("");
   const [seoKeywords, setSeoKeywords] = useState("");
@@ -46,6 +51,17 @@ export default function CreateArticlePage() {
     { name: string; text: string }[]
   >([]);
 
+  // 🌟 共用網址判斷
+  const isLocal =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1");
+
+  const BACKEND_URL = isLocal
+    ? ""
+    : process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
+      "https://tangsong-production.up.railway.app";
+
   const addFaq = () => setFaqs([...faqs, { q: "", a: "" }]);
   const updateFaq = (i: number, f: "q" | "a", v: string) => {
     const n = [...faqs];
@@ -63,6 +79,100 @@ export default function CreateArticlePage() {
   const removeHowTo = (i: number) =>
     setHowToSteps(howToSteps.filter((_, idx) => idx !== i));
 
+  // ==========================
+  // 💡 共用的 API 圖片上傳函數
+  // ==========================
+  const uploadImageToServer = async (file: File) => {
+    const formData = new FormData();
+    formData.append("files", file);
+
+    const res = await fetch(`${BACKEND_URL}/admin/uploads`, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
+
+    const textData = await res.text();
+    if (!res.ok) throw new Error(`上傳失敗: ${textData}`);
+
+    const data = JSON.parse(textData);
+    return data.files?.[0]?.url || data.uploads?.[0]?.url;
+  };
+
+  // ==========================
+  // 💡 文章主圖上傳邏輯
+  // ==========================
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const url = await uploadImageToServer(file);
+      if (url) {
+        setThumbnail(url);
+        toast.success("主圖上傳成功！");
+      }
+    } catch (error: any) {
+      console.error("❌ 主圖上傳錯誤:", error);
+      toast.error("主圖上傳失敗", { description: error.message });
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  // ==========================
+  // 💡 內文編輯器圖片上傳攔截器
+  // ==========================
+  const imageHandler = () => {
+    const input = document.createElement("input");
+    input.setAttribute("type", "file");
+    input.setAttribute("accept", "image/*");
+    input.click();
+
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+
+      const quill = quillRef.current?.getEditor();
+      if (!quill) return;
+
+      toast.info("正在上傳圖片中...");
+
+      try {
+        const url = await uploadImageToServer(file);
+        if (url) {
+          const range = quill.getSelection(true);
+          quill.insertEmbed(range.index, "image", url);
+          quill.setSelection(range.index + 1, 0);
+          toast.success("圖片插入成功！");
+        }
+      } catch (error: any) {
+        console.error("❌ 編輯器圖片上傳錯誤:", error);
+        toast.error("插入圖片失敗", { description: error.message });
+      }
+    };
+  };
+
+  const modules = useMemo(
+    () => ({
+      toolbar: {
+        container: [
+          [{ header: [1, 2, 3, false] }],
+          ["bold", "italic", "underline", "strike", "blockquote"],
+          [{ list: "ordered" }, { list: "bullet" }],
+          ["link", "image"],
+          ["clean"],
+        ],
+        handlers: {
+          image: imageHandler,
+        },
+      },
+    }),
+    [],
+  );
+
   const generateJsonLdPreview = () => {
     const graph: any[] = [];
     const baseArticle: any = {
@@ -72,6 +182,10 @@ export default function CreateArticlePage() {
       keywords: schemaKeywords || seoKeywords || "",
       author: { "@type": "Organization", name: "唐宋珠寶" },
     };
+
+    if (thumbnail) {
+      baseArticle.image = [thumbnail];
+    }
 
     if (schemaSpeakable === "Enable") {
       baseArticle.speakable = {
@@ -111,20 +225,18 @@ export default function CreateArticlePage() {
     );
   };
 
-  // 儲存文章 (武裝除錯 + 絕對路徑版)
+  // 儲存文章
   const handleSave = async () => {
     if (!title || !handle) return toast.error("標題與網址代稱不可為空！");
     setIsSaving(true);
 
-    console.log("🚀 [BlogCreate] 準備送出文章...");
-
     try {
       const schemaData = JSON.parse(generateJsonLdPreview());
 
-      // 💡 把準備送出的 Payload 先整理出來印在 Console 檢查
       const payload = {
         title,
         handle,
+        thumbnail,
         content,
         is_published: isPublished === "true",
         seo_title: seoTitle,
@@ -133,36 +245,21 @@ export default function CreateArticlePage() {
         schema_type: schemaType,
         faq_schema: schemaData,
       };
-      console.log("📤 [BlogCreate] 即將送出的 Payload:", payload);
 
-      // 🌟 定義後端網址：優先吃環境變數，若無則預設為正式機 Railway 網址
-      const backendUrl =
-        process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
-        "https://tangsong-production.up.railway.app";
-
-      const res = await fetch(`${backendUrl}/admin/articles`, {
+      const res = await fetch(`${BACKEND_URL}/admin/articles`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // 必須帶上，確保能讀取到登入 Cookie
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
-      console.log(
-        `📥 [BlogCreate] API 回應狀態: ${res.status} ${res.statusText}`,
-      );
-
-      // 💡 解析前先看原始字串，抓出後端可能吐出的詳細錯誤訊息
       const textData = await res.text();
-      console.log("📦 [BlogCreate] 後端原始回傳內容:", textData);
-
-      if (!res.ok) {
-        throw new Error(`儲存失敗 (${res.status}): ${textData}`);
-      }
+      if (!res.ok) throw new Error(`儲存失敗 (${res.status}): ${textData}`);
 
       toast.success("成功", { description: "文章已成功儲存！" });
       navigate("/blog");
     } catch (error: any) {
-      console.error("❌ [BlogCreate] 儲存過程發生嚴重錯誤:", error);
+      console.error("❌ [BlogCreate] 儲存過程發生錯誤:", error);
       toast.error("發生錯誤", {
         description: error.message || "請開啟 F12 查看詳細錯誤",
       });
@@ -238,13 +335,71 @@ export default function CreateArticlePage() {
               />
             </div>
           </div>
+
+          <div className="bg-white p-5 rounded-md shadow-sm border border-gray-200 flex flex-col gap-4">
+            <Heading level="h3" className="text-sm font-bold text-stone-800">
+              文章主圖 (Thumbnail)
+            </Heading>
+            <div className="flex flex-col md:flex-row gap-6 items-start">
+              <div className="flex-1 flex flex-col gap-3 w-full">
+                <Label className="text-xs text-stone-500">
+                  上傳圖片 或 貼上圖片網址
+                </Label>
+                <div className="flex gap-3 items-center">
+                  <Input
+                    value={thumbnail}
+                    onChange={(e) => setThumbnail(e.target.value)}
+                    placeholder="https://..."
+                    className="flex-1 bg-white"
+                  />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="thumbnail-upload"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      document.getElementById("thumbnail-upload")?.click()
+                    }
+                    isLoading={isUploading}
+                    className="shrink-0"
+                  >
+                    ↑ 上傳圖片
+                  </Button>
+                </div>
+                <p className="text-[11px] text-stone-400 mt-1">
+                  建議尺寸：橫式 1200 x 630px。支援 JPG, PNG, WEBP 格式。
+                </p>
+              </div>
+
+              {thumbnail ? (
+                <div className="w-[180px] h-[100px] rounded border border-stone-200 overflow-hidden shrink-0 bg-stone-50">
+                  <img
+                    src={thumbnail}
+                    alt="預覽"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-[180px] h-[100px] rounded border border-dashed border-stone-300 flex items-center justify-center shrink-0 bg-stone-50 text-stone-400 text-xs">
+                  尚未設定圖片
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="flex flex-col gap-2">
             <Label>文章內容</Label>
             <div className="bg-white rounded-md shadow-sm">
               <ReactQuill
+                ref={quillRef}
                 theme="snow"
                 value={content}
                 onChange={setContent}
+                modules={modules}
                 className="h-[500px] mb-12 border-none"
               />
             </div>
