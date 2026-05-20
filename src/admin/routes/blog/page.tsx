@@ -91,7 +91,7 @@ export default function BlogListPage() {
         <Button
           variant="primary"
           onClick={() => navigate("/blog/create")}
-          className="bg-[#5A1216] text-white hover:bg-[#3A0A0E]"
+          className="bg-[#5A1216] text-white hover:bg-[#b62f26]"
         >
           + 新增文章
         </Button>

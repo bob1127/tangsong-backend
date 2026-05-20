@@ -26,11 +26,14 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     )
 
     if (historyData && historyData.length > 0) {
+      // 🚀 終極抓漏：印出第一筆歷史紀錄，確認裡面有沒有 base_pd_twd_qian
+      console.log("🔍 [Debug] 資料庫第一筆歷史紀錄:", historyData[0])
+
       const processedData = historyData.map((record: any) => {
         const plainRecord = JSON.parse(JSON.stringify(record))
         const rawAg = Number(plainRecord.base_silver_twd_qian) || Number(plainRecord.silver_price_qian) || 0
 
-        // 🚀 防彈級轉換器：確保 0 不會被當成空值，字串能精準轉成數字
+        // 防彈級轉換器：確保 0 不會被當成空值，字串能精準轉成數字
         const parsePrice = (val: any) => {
           if (val === undefined || val === null || val === "") return undefined;
           return Number(val);

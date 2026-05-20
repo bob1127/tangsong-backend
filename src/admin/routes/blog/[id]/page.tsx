@@ -422,7 +422,7 @@ export default function EditArticlePage() {
             onClick={handleUpdate}
             variant="primary"
             isLoading={isSaving}
-            className="bg-[#5A1216] text-white hover:bg-[#3A0A0E]"
+            className="bg-[#5A1216] text-white hover:bg-[#b62f26]"
           >
             更新儲存
           </Button>

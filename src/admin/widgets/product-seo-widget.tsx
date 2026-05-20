@@ -141,7 +141,7 @@ export default function ProductSeoWidget({ data: product }: { data: any }) {
           onClick={handleSave}
           variant="primary"
           isLoading={isSaving}
-          className="bg-[#5A1216] hover:bg-[#3A0A0E] text-white"
+          className="bg-[#5A1216] hover:bg-[#b62f26] text-white"
         >
           儲存 SEO 設定
         </Button>

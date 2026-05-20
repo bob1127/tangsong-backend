@@ -293,7 +293,7 @@ export default function CreateArticlePage() {
             onClick={handleSave}
             variant="primary"
             isLoading={isSaving}
-            className="bg-[#5A1216] text-white hover:bg-[#3A0A0E]"
+            className="bg-[#5A1216] text-white hover:bg-[#b62f26]"
           >
             儲存文章
           </Button>
