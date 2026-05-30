@@ -85,8 +85,9 @@ export async function adminFetch(
       ...options,
       credentials: "include",
       headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
+        ...(options.body instanceof FormData
+          ? options.headers
+          : { "Content-Type": "application/json", ...options.headers }),
       },
     })
 
@@ -130,6 +131,20 @@ export class AdminFetchError extends Error {
     this.name = "AdminFetchError"
     this.debug = debug
   }
+}
+
+export async function adminUpload(file: File): Promise<string | undefined> {
+  const formData = new FormData()
+  formData.append("files", file)
+  const { data } = await adminFetch("/admin/uploads", {
+    method: "POST",
+    body: formData,
+  })
+  const payload = data as {
+    files?: { url?: string }[]
+    uploads?: { url?: string }[]
+  }
+  return payload.files?.[0]?.url || payload.uploads?.[0]?.url
 }
 
 export function formatAdminFetchError(err: unknown): string {

@@ -12,6 +12,7 @@ import {
   Switch,
 } from "@medusajs/ui";
 import { useNavigate } from "react-router-dom";
+import { adminFetch, adminUpload, formatAdminFetchError } from "../../../lib/admin-fetch";
 
 // @ts-ignore
 import ReactQuill, { Quill } from "react-quill";
@@ -51,16 +52,12 @@ export default function CreateArticlePage() {
     { name: string; text: string }[]
   >([]);
 
-  // 🌟 共用網址判斷
-  const isLocal =
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1");
-
-  const BACKEND_URL = isLocal
-    ? ""
-    : process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
-      "https://tangsong-production.up.railway.app";
+  // 圖片上傳
+  const uploadImageToServer = async (file: File) => {
+    const url = await adminUpload(file)
+    if (!url) throw new Error("上傳成功但未取得圖片網址")
+    return url
+  };
 
   const addFaq = () => setFaqs([...faqs, { q: "", a: "" }]);
   const updateFaq = (i: number, f: "q" | "a", v: string) => {
@@ -78,26 +75,6 @@ export default function CreateArticlePage() {
   };
   const removeHowTo = (i: number) =>
     setHowToSteps(howToSteps.filter((_, idx) => idx !== i));
-
-  // ==========================
-  // 💡 共用的 API 圖片上傳函數
-  // ==========================
-  const uploadImageToServer = async (file: File) => {
-    const formData = new FormData();
-    formData.append("files", file);
-
-    const res = await fetch(`${BACKEND_URL}/admin/uploads`, {
-      method: "POST",
-      credentials: "include",
-      body: formData,
-    });
-
-    const textData = await res.text();
-    if (!res.ok) throw new Error(`上傳失敗: ${textData}`);
-
-    const data = JSON.parse(textData);
-    return data.files?.[0]?.url || data.uploads?.[0]?.url;
-  };
 
   // ==========================
   // 💡 文章主圖上傳邏輯
@@ -246,15 +223,10 @@ export default function CreateArticlePage() {
         faq_schema: schemaData,
       };
 
-      const res = await fetch(`${BACKEND_URL}/admin/articles`, {
+      await adminFetch("/admin/articles", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(payload),
       });
-
-      const textData = await res.text();
-      if (!res.ok) throw new Error(`儲存失敗 (${res.status}): ${textData}`);
 
       toast.success("成功", { description: "文章已成功儲存！" });
       navigate("/blog");

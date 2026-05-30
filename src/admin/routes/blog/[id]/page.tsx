@@ -12,6 +12,7 @@ import {
   Switch,
 } from "@medusajs/ui";
 import { useNavigate, useParams } from "react-router-dom";
+import { adminFetch, adminUpload, formatAdminFetchError } from "../../../lib/admin-fetch";
 
 // @ts-ignore
 import ReactQuill from "react-quill";
@@ -58,17 +59,6 @@ export default function EditArticlePage() {
     { name: string; text: string }[]
   >([]);
 
-  // 🌟 終極智慧判斷：放在元件內部，讓所有 API 請求都能共用
-  const isLocal =
-    typeof window !== "undefined" &&
-    (window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1");
-
-  const BACKEND_URL = isLocal
-    ? ""
-    : process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
-      "https://tangsong-production.up.railway.app";
-
   const addFaq = () => setFaqs([...faqs, { q: "", a: "" }]);
   const updateFaq = (i: number, f: "q" | "a", v: string) => {
     const n = [...faqs];
@@ -86,65 +76,33 @@ export default function EditArticlePage() {
   const removeHowTo = (i: number) =>
     setHowToSteps(howToSteps.filter((_, idx) => idx !== i));
 
-  // ==========================
-  // 💡 圖片上傳處理邏輯
-  // ==========================
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append("files", file);
-
     try {
-      const res = await fetch(`${BACKEND_URL}/admin/uploads`, {
-        method: "POST",
-        credentials: "include", // 🌟 必須帶上通行證
-        body: formData,
-      });
-
-      const textData = await res.text();
-      if (!res.ok) throw new Error(`上傳失敗 (${res.status}): ${textData}`);
-
-      const data = JSON.parse(textData);
-      const uploadedUrl = data.files?.[0]?.url || data.uploads?.[0]?.url;
-
+      const uploadedUrl = await adminUpload(file);
       if (uploadedUrl) {
         setThumbnail(uploadedUrl);
         toast.success("圖片上傳成功！");
       }
     } catch (error: any) {
-      console.error("❌ [Upload] 圖片上傳發生錯誤:", error);
-      toast.error("發生錯誤", { description: error.message });
+      toast.error("發生錯誤", {
+        description: formatAdminFetchError(error),
+      });
     } finally {
       setIsUploading(false);
       e.target.value = "";
     }
   };
 
-  // ==========================
-  // 💡 讀取文章邏輯
-  // ==========================
   useEffect(() => {
     const fetchArticle = async () => {
-      console.log(`🚀 [EditArticle] 開始抓取文章 (ID: ${id})...`);
       try {
-        const res = await fetch(`${BACKEND_URL}/admin/articles/${id}`, {
-          credentials: "include", // 🌟 必須帶上通行證
-        });
-
-        console.log(
-          `📥 [EditArticle] API 回應狀態: ${res.status} ${res.statusText}`,
-        );
-        const textData = await res.text();
-
-        if (!res.ok)
-          throw new Error(`找不到該文章 (${res.status}): ${textData}`);
-
-        const data = JSON.parse(textData);
-        console.log("✅ [EditArticle] 成功解析文章資料:", data);
-        const a = data.article;
+        const { data } = await adminFetch(`/admin/articles/${id}`);
+        const payload = data as { article: any };
+        const a = payload.article;
 
         setTitle(a.title || "");
         setHandle(a.handle || "");
@@ -233,16 +191,15 @@ export default function EditArticlePage() {
           }
         }
       } catch (error: any) {
-        console.error("❌ [EditArticle] 抓取過程發生錯誤:", error);
         toast.error("讀取失敗", {
-          description: error.message || "無法載入文章內容",
+          description: formatAdminFetchError(error),
         });
       } finally {
         setIsLoading(false);
       }
     };
     fetchArticle();
-  }, [id, BACKEND_URL]);
+  }, [id]);
 
   const generateJsonLdPreview = () => {
     const graph: any[] = [];
@@ -339,22 +296,14 @@ export default function EditArticlePage() {
 
       console.log("📤 [EditArticle] 即將送出的 Payload:", payload);
 
-      const res = await fetch(`${BACKEND_URL}/admin/articles/${id}`, {
+      await adminFetch(`/admin/articles/${id}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // 🌟 必須帶上通行證
         body: JSON.stringify(payload),
       });
 
-      const textData = await res.text();
-      console.log(`📥 [EditArticle] API 回應狀態: ${res.status}`);
-
-      if (!res.ok) throw new Error(`更新失敗 (${res.status}): ${textData}`);
-
       toast.success("成功", { description: "文章已成功更新！" });
     } catch (error: any) {
-      console.error("❌ [EditArticle] 更新過程發生嚴重錯誤:", error);
-      toast.error("發生錯誤", { description: error.message });
+      toast.error("發生錯誤", { description: formatAdminFetchError(error) });
     } finally {
       setIsSaving(false);
     }
@@ -367,18 +316,14 @@ export default function EditArticlePage() {
     if (!window.confirm("確定要刪除這篇文章嗎？此動作無法復原！")) return;
     setIsDeleting(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/admin/articles/${id}`, {
+      await adminFetch(`/admin/articles/${id}`, {
         method: "DELETE",
-        credentials: "include", // 🌟 必須帶上通行證
       });
-
-      if (!res.ok) throw new Error(`刪除失敗 (${res.status})`);
 
       toast.success("已刪除", { description: "文章已從資料庫移除。" });
       navigate("/blog");
     } catch (error: any) {
-      console.error("❌ [EditArticle] 刪除過程發生嚴重錯誤:", error);
-      toast.error("刪除失敗", { description: error.message });
+      toast.error("刪除失敗", { description: formatAdminFetchError(error) });
     } finally {
       setIsDeleting(false);
     }

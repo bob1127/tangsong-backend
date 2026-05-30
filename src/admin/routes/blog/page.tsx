@@ -11,8 +11,8 @@ import {
 import { defineRouteConfig } from "@medusajs/admin-sdk";
 import { DocumentText } from "@medusajs/icons";
 import { useNavigate } from "react-router-dom";
+import { adminFetch, formatAdminFetchError } from "../../lib/admin-fetch";
 
-// 💡 頁面導航設定
 export const config = defineRouteConfig({
   label: "文章管理 (Blog)",
   icon: DocumentText,
@@ -23,52 +23,15 @@ export default function BlogListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 抓取文章列表 (武裝除錯 + 終極智慧網址判斷)
   const fetchArticles = async () => {
-    console.log("🚀 [BlogList] 開始抓取文章列表...");
     try {
-      // 🌟 終極智慧判斷：明確指定本地端的兩種可能網址
-      const isLocal =
-        typeof window !== "undefined" &&
-        (window.location.hostname === "localhost" ||
-          window.location.hostname === "127.0.0.1");
-
-      // 如果是本地端，使用相對路徑 "" (讀取本機 DB)
-      // 如果是正式站，才使用環境變數或 Railway 網址
-      const backendUrl = isLocal
-        ? ""
-        : process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ||
-          "https://tangsong-production.up.railway.app";
-
-      console.log(
-        `🔗 [BlogList] 目前使用的後端 API 路徑: ${backendUrl}/admin/articles`,
-      );
-
-      const res = await fetch(`${backendUrl}/admin/articles`, {
-        credentials: "include", // 必須帶上，確保能讀取到登入 Cookie
-      });
-
-      console.log(
-        `📥 [BlogList] API 回應狀態: ${res.status} ${res.statusText}`,
-      );
-
-      // 💡 先把回傳結果轉成純文字，避免 JSON.parse 直接死掉
-      const textData = await res.text();
-      console.log("📦 [BlogList] 後端原始回傳內容:", textData);
-
-      if (!res.ok) {
-        throw new Error(`伺服器拒絕請求 (${res.status}): ${textData}`);
-      }
-
-      // 確認有資料才轉 JSON
-      const data = textData ? JSON.parse(textData) : {};
-      console.log("✅ [BlogList] 成功解析的 JSON 資料:", data);
-
-      setArticles(data.articles || []);
+      const { data } = await adminFetch("/admin/articles");
+      const payload = data as { articles?: any[] };
+      setArticles(payload.articles || []);
     } catch (error: any) {
-      console.error("❌ [BlogList] 抓取過程發生嚴重錯誤:", error);
+      console.error("❌ [BlogList]", error);
       toast.error("無法載入文章列表", {
-        description: error.message || "請開啟 F12 查看詳細錯誤",
+        description: formatAdminFetchError(error),
       });
     } finally {
       setIsLoading(false);
