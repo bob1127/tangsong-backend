@@ -7,9 +7,15 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     const stores = await storeModule.listStores({}, { select: ["id", "metadata"] })
     const store = stores[0]
 
+    if (!store) {
+      console.warn("[metal-settings GET] 找不到 store 實體")
+      return res.status(404).json({ error: "找不到商店設定" })
+    }
+
     res.json({ settings: store?.metadata?.metal_settings || {} })
-  } catch (error) {
-    res.status(500).json({ error: "無法讀取設定" })
+  } catch (error: any) {
+    console.error("[metal-settings GET] 失敗:", error?.message || error)
+    res.status(500).json({ error: "無法讀取設定", details: error?.message })
   }
 }
 

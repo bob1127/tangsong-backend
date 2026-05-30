@@ -5,6 +5,13 @@ loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 // 💡 這裡定義你的唐宋資料庫網址，作為備援
 const TANGSONG_DB_URL = "postgresql://postgres.qhefiwluztdmxractwln:jofja5-patZih-hihfet@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres"
 
+const PRODUCTION_ADMIN_URL = "https://tangsong-backend.vercel.app"
+const PRODUCTION_STORE_URL = "https://www.tangsong.com.tw"
+
+const defaultStoreCors = `http://localhost:8000,${PRODUCTION_STORE_URL}`
+const defaultAdminCors = `http://localhost:9000,http://localhost:7001,${PRODUCTION_ADMIN_URL}`
+const defaultAuthCors = `http://localhost:8000,http://localhost:9000,${PRODUCTION_STORE_URL},${PRODUCTION_ADMIN_URL}`
+
 module.exports = defineConfig({
   projectConfig: {
     // 🚀 修改這裡：優先用環境變數，沒有的話就用上面定義的網址
@@ -15,19 +22,21 @@ module.exports = defineConfig({
       ssl: { rejectUnauthorized: false }, 
     },
     http: {
-      // 🚀 核心修正：將 localhost:8000 加進白名單，避免 API 鑰匙被攔截
-      storeCors: process.env.STORE_CORS || "http://localhost:3000,http://localhost:8000",
-      adminCors: process.env.ADMIN_CORS || "http://localhost:7001,http://localhost:9000",
-      authCors: process.env.AUTH_CORS || "http://localhost:3000,http://localhost:8000",
+      storeCors: process.env.STORE_CORS || defaultStoreCors,
+      adminCors: process.env.ADMIN_CORS || defaultAdminCors,
+      authCors: process.env.AUTH_CORS || defaultAuthCors,
       jwtSecret: process.env.JWT_SECRET || "supersecret",
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
   },
   admin: {
-    // 🚀 沿用你成功的舊專案邏輯
     disable: process.env.VERCEL === "1" ? false : process.env.NODE_ENV === 'production', 
     path: process.env.VERCEL === "1" ? "/" : "/app",
-    backendUrl: process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
+    // Vercel Admin 必須指向 Vercel 自身（走 rewrite），不可指 Railway，否則瀏覽器跨域 401
+    backendUrl:
+      process.env.VERCEL === "1"
+        ? process.env.MEDUSA_ADMIN_PUBLIC_URL || PRODUCTION_ADMIN_URL
+        : process.env.MEDUSA_BACKEND_URL || "http://localhost:9000",
   },
   modules: {
     blog: {

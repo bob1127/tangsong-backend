@@ -13,6 +13,10 @@
       "destination": "https://tangsong-production.up.railway.app/auth/:path*"
     },
     {
+      "source": "/cloud/:path*",
+      "destination": "https://tangsong-production.up.railway.app/cloud/:path*"
+    },
+    {
       "source": "/uploads/:path*",
       "destination": "https://tangsong-production.up.railway.app/uploads/:path*"
     },
