@@ -32,15 +32,19 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
           
           gold_sell: parsePrice(dbSettings.gold_sell),
           gold_buy: parsePrice(dbSettings.gold_buy),
+          gold_bullion_buy: parsePrice(dbSettings.gold_bullion_buy),
           k18_buy: parsePrice(dbSettings.k18_buy),
           k14_buy: parsePrice(dbSettings.k14_buy),
           pt950_sell: parsePrice(dbSettings.pt950_sell),
           pt950_buy: parsePrice(dbSettings.pt950_buy),
           pd_sell: parsePrice(dbSettings.pd_sell),
           pd_buy: parsePrice(dbSettings.pd_buy),
+          silver_buy: parsePrice(dbSettings.silver_buy),
           
           store_silver_sell: rawAg > 0 ? rawAg + 40 : 0,
-          store_silver_buy: rawAg > 0 ? rawAg - 20 : 0,
+          store_silver_buy:
+            parsePrice(dbSettings.silver_buy) ??
+            (rawAg > 0 ? rawAg - 20 : 0),
         }
       })
 
