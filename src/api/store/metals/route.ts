@@ -1,18 +1,20 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { Modules } from "@medusajs/framework/utils"
+import { getPrimaryStore } from "../../../lib/get-primary-store"
+import { resolveStorePricesUpdatedAt } from "../../../lib/metal-settings"
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
   try {
     const metalsModuleService: any = req.scope.resolve("metals")
-    const storeModule: any = req.scope.resolve(Modules.STORE)
-    
-    const stores = await storeModule.listStores({}, { select: ["id", "metadata"] })
-    const storeMetadata = stores[0]?.metadata || {}
-    const dbSettings = storeMetadata.metal_settings || {}
-    const storePricesUpdatedAt =
-      storeMetadata.metal_settings_updated_at ??
-      dbSettings.updated_at ??
-      null
+    const store = await getPrimaryStore(req.scope)
+    const storeMetadata = (store?.metadata || {}) as Record<string, unknown>
+    const dbSettings = (storeMetadata.metal_settings || {}) as Record<
+      string,
+      unknown
+    >
+    const storePricesUpdatedAt = resolveStorePricesUpdatedAt(
+      storeMetadata,
+      store?.updated_at
+    )
 
     const queryDays = req.query?.days as string
     const days = parseInt(queryDays || "7")
@@ -33,7 +35,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
         };
 
         return {
-          ...plainRecord, // 🚀 這裡會自動把 base_palladium_twd_qian 送出去
+          ...plainRecord,
           
           gold_sell: parsePrice(dbSettings.gold_sell),
           gold_buy: parsePrice(dbSettings.gold_buy),
