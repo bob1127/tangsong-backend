@@ -7,7 +7,12 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
     const storeModule: any = req.scope.resolve(Modules.STORE)
     
     const stores = await storeModule.listStores({}, { select: ["id", "metadata"] })
-    const dbSettings = stores[0]?.metadata?.metal_settings || {}
+    const storeMetadata = stores[0]?.metadata || {}
+    const dbSettings = storeMetadata.metal_settings || {}
+    const storePricesUpdatedAt =
+      storeMetadata.metal_settings_updated_at ??
+      dbSettings.updated_at ??
+      null
 
     const queryDays = req.query?.days as string
     const days = parseInt(queryDays || "7")
@@ -40,6 +45,8 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
           pd_sell: parsePrice(dbSettings.pd_sell),
           pd_buy: parsePrice(dbSettings.pd_buy),
           silver_buy: parsePrice(dbSettings.silver_buy),
+          
+          store_prices_updated_at: storePricesUpdatedAt,
           
           store_silver_sell: rawAg > 0 ? rawAg + 40 : 0,
           store_silver_buy:

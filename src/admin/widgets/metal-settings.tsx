@@ -11,6 +11,7 @@ const MetalSettingsWidget = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [debugLog, setDebugLog] = useState<string>("");
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
 
   const [settings, setSettings] = useState({
     gold_sell: "",
@@ -28,7 +29,14 @@ const MetalSettingsWidget = () => {
       setDebugLog("");
       try {
         const { data } = await adminFetch("/admin/metal-settings");
-        const payload = data as { settings?: Record<string, unknown> };
+        const payload = data as {
+          settings?: Record<string, unknown>;
+          updated_at?: string | null;
+        };
+
+        if (payload.updated_at) {
+          setLastUpdatedAt(payload.updated_at);
+        }
 
         if (payload.settings && Object.keys(payload.settings).length > 0) {
           setSettings({
@@ -66,13 +74,24 @@ const MetalSettingsWidget = () => {
         pd_buy: Number(settings.pd_buy) || 0,
       };
 
-      await adminFetch("/admin/metal-settings", {
+      const { data } = await adminFetch("/admin/metal-settings", {
         method: "POST",
         body: JSON.stringify(payload),
       });
 
+      const result = data as { updated_at?: string | null };
+      if (result.updated_at) {
+        setLastUpdatedAt(result.updated_at);
+      }
+
+      const updatedLabel = result.updated_at
+        ? new Date(result.updated_at).toLocaleString("zh-TW")
+        : null;
+
       toast.success("牌告價設定已更新", {
-        description: "前台即時行情將立即套用新的價格。",
+        description: updatedLabel
+          ? `前台將顯示最後更新時間：${updatedLabel}`
+          : "前台即時行情將立即套用新的價格。",
       });
     } catch (err) {
       setDebugLog(formatAdminFetchError(err));
@@ -119,6 +138,12 @@ const MetalSettingsWidget = () => {
       <p className="mb-4 text-xs text-stone-400 font-mono">
         API 模式: {apiMode} | Host:{" "}
         {typeof window !== "undefined" ? window.location.hostname : "-"}
+        {lastUpdatedAt && (
+          <>
+            {" "}
+            | 最後更新：{new Date(lastUpdatedAt).toLocaleString("zh-TW")}
+          </>
+        )}
       </p>
 
       {debugLog && (
